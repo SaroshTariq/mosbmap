@@ -10,9 +10,11 @@ import java.util.Date;
  */
 public class DateTimeUtil {
 
-    /***
-     * Generate current timestamp with fromat 'yyyy-MM-dd HH:mm:ss'
-     * @return 
+    /**
+     * *
+     * Generate current timestamp string with format 'yyyy-MM-dd HH:mm:ss'
+     *
+     * @return
      */
     public static String currentTimestamp() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -21,22 +23,20 @@ public class DateTimeUtil {
         return currentTimeStamp;
     }
 
-
-    /***
-     * Generate expiry time by adding seconds, hours or minutes with format 'yyyy-MM-dd HH:mm:ss'
+    /**
+     * *
+     * Generate expiry time by adding seconds, hours or minutes with format
+     * 'yyyy-MM-dd HH:mm:ss'
+     *
      * @param seconds
-     * @param minutes
-     * @param hours
-     * @return 
+     * @return
      */
-    public static String expiryTimestamp(int seconds, int minutes, int hours) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static String expiryTimestamp(int seconds) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         Date currentDate = new Date();
         Calendar c = Calendar.getInstance();
         c.setTime(currentDate);
-        c.add(Calendar.HOUR, hours);
         c.add(Calendar.SECOND, seconds);
-        c.add(Calendar.MINUTE, minutes);
         Date expiryDate = c.getTime();
         return dateFormat.format(expiryDate);
     }

@@ -23,9 +23,9 @@ import lombok.Setter;
 public class Authority implements Serializable {
 
     @Id
-    @Column(name = "name")
-    private String name;
+    @Column(name = "id")
+    private String id;
 
-    private String displayName;
+    private String name;
     private String description;
 }

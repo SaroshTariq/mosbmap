@@ -33,7 +33,7 @@ public class SessionRequestFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    SessionsRepository sessionsRepository;
+    SessionsRepository sessionRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -49,38 +49,26 @@ public class SessionRequestFilter extends OncePerRequestFilter {
         String jwtToken = null;
         // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
-            jwtToken = requestTokenHeader.substring(7);
-            try {
-                sessionId = jwtUtil.getSessionIdToken(jwtToken);
-                LogUtil.info(logprefix, location, "Found Token", "");
-            } catch (IllegalArgumentException e) {
-                LogUtil.warn(logprefix, location, "Unable to get JWT Token", "");
-            } catch (Exception e) {
-                LogUtil.warn(logprefix, location, "JWT Token error", "");
-            }
+            sessionId = requestTokenHeader.substring(7);
         } else {
             LogUtil.warn(logprefix, location, "JWT Token does not begin with Bearer String", "");
         }
 
         if (sessionId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            Optional<Session> optSession = sessionsRepository.findById(sessionId);
+            Optional<Session> optSession = sessionRepository.findById(sessionId);
             if (optSession.isPresent()) {
                 Session session = optSession.get();
 
-                // if token is valid configure Spring Security to manually set authentication
-                if (jwtUtil.validateToken(jwtToken, session)) {
+                MySQLUserDetails userDetails = this.jwtUserDetailsService.loadUserByUsername(session.getUser().getUsername());
+                LogUtil.info(logprefix, location, "JWT Token valid", "");
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                usernamePasswordAuthenticationToken
+                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    MySQLUserDetails userDetails = this.jwtUserDetailsService.loadUserByUsername(session.getUser().getUsername());
-                    LogUtil.info(logprefix, location, "JWT Token valid", "");
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    usernamePasswordAuthenticationToken
-                            .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-
-                }
             }
 
         }

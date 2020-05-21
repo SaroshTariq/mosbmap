@@ -35,7 +35,7 @@ public class MySQLUserDetails implements UserDetails {
         this.userName = user.getUsername();
         this.password = user.getPassword();
         this.locked = user.isLocked();
-        this.role = user.getRoleName();
+        this.role = user.getRoleId();
         if (null == user.getExpiry()) {
             this.expired = false;
         }
@@ -43,7 +43,7 @@ public class MySQLUserDetails implements UserDetails {
 
         List<RoleAuthority> userAuths = auths;
         userAuths.stream().forEach((userAuth) -> {
-            grantedAuthorities.add(new SimpleGrantedAuthority(userAuth.getAuthorityName()));
+            grantedAuthorities.add(new SimpleGrantedAuthority(userAuth.getAuthorityId()));
         });
     }
 

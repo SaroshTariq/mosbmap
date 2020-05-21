@@ -24,9 +24,9 @@ import lombok.Setter;
 public class Role implements Serializable {
 
     @Id
-    @Column(name = "name")
+    @Column(name = "id")
     @NotBlank
-    private String name;
+    private String id;
 
     @NotBlank
     private int simoultaneousLogins;

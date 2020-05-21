@@ -34,19 +34,11 @@ public class Session implements Serializable {
     @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
 
-    @NotBlank(message = "userid is required")
     private String userId;
-
-    @NotBlank(message = "remoteAddress is required")
     private String remoteAddress;
-
-    @NotBlank(message = "status is required")
     private String status;
-
-    @NotBlank(message = "created is required")
+    private String expiry;
     private String created;
-
-    @NotBlank(message = "updated is required")
     private String updated;
 
     @ManyToOne(fetch = FetchType.LAZY)

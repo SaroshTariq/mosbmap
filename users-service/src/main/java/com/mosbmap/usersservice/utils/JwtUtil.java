@@ -1,6 +1,5 @@
 package com.mosbmap.usersservice.utils;
 
-import com.mosbmap.usersservice.configprops.SessionConfigProps;
 import com.mosbmap.usersservice.models.daos.Session;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -12,7 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -21,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Service
 public class JwtUtil {
 
-    @Autowired
-    SessionConfigProps sessionConfigProps;
+    @Value("${session.expiry:3600}")
+    private int expiry;
 
     public String getSessionIdToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -42,7 +41,7 @@ public class JwtUtil {
     }
 
     private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().setSigningKey(sessionConfigProps.getKey()).parseClaimsJws(token).getBody();
+        return Jwts.parser().setSigningKey("secret").parseClaimsJws(token).getBody();
     }
 
     private Boolean isTokenExpired(String token) {
@@ -66,8 +65,8 @@ public class JwtUtil {
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + sessionConfigProps.getExpiry() * 1000))
-                .signWith(SignatureAlgorithm.HS512, sessionConfigProps.getKey())
+                .setExpiration(new Date(System.currentTimeMillis() + expiry * 1000))
+                .signWith(SignatureAlgorithm.HS512, "secret")
                 .compact();
     }
 

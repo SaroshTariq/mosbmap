@@ -2,6 +2,7 @@ package com.mosbmap.usersservice.models.daos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,12 +17,32 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RoleAuthoritiyIdentity implements Serializable {
 
-    private String roleName;
-    private String authorityName;
+    private String roleId;
+    private String authorityId;
 
-    public RoleAuthoritiyIdentity(String roleName, String authorityName) {
-        this.roleName = roleName;
-        this.authorityName = authorityName;
+    public RoleAuthoritiyIdentity(String roleId, String authorityId) {
+        this.roleId = roleId;
+        this.authorityId = authorityId;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final RoleAuthoritiyIdentity other = (RoleAuthoritiyIdentity) obj;
+        if (!Objects.equals(this.roleId, other.roleId)) {
+            return false;
+        }
+        if (!Objects.equals(this.authorityId, other.authorityId)) {
+            return false;
+        }
+        return true;
+    }
+    
+    
 
 }

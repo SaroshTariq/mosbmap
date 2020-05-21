@@ -16,7 +16,7 @@ public class LogUtil {
     }
 
     public static void warn(String prefix, String location, String message, String postfix) {
-        application.info(prefix + location + message + postfix);
+        application.warn(prefix + location + message + postfix);
     }
 
     public static void error(String prefix, String location, String message, String postfix, Exception e) {

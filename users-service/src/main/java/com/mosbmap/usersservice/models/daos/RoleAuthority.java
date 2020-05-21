@@ -15,8 +15,8 @@ import lombok.Setter;
  * @author Sarosh
  */
 @Entity
-@IdClass(RoleAuthoritiyIdentity.class)
 @Table(name = "role_authorities")
+@IdClass(RoleAuthoritiyIdentity.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,7 +24,7 @@ import lombok.Setter;
 public class RoleAuthority implements Serializable {
 
     @Id
-    private String roleName;
+    private String roleId;
     @Id
-    private String authorityName;
+    private String authorityId;
 }

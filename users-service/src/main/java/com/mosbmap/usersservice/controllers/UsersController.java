@@ -3,11 +3,9 @@ package com.mosbmap.usersservice.controllers;
 import com.mosbmap.usersservice.models.HttpReponse;
 import com.mosbmap.usersservice.models.daos.Session;
 import com.mosbmap.usersservice.models.daos.User;
-import com.mosbmap.usersservice.repositories.RolesRepository;
 import com.mosbmap.usersservice.repositories.SessionsRepository;
 import com.mosbmap.usersservice.repositories.UsersRepository;
 import com.mosbmap.usersservice.utils.DateTimeUtil;
-import com.mosbmap.usersservice.utils.JwtUtil;
 import com.mosbmap.usersservice.utils.LogUtil;
 import java.util.List;
 import java.util.Optional;
@@ -19,13 +17,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -49,12 +46,6 @@ public class UsersController {
     AuthenticationManager authenticationManager;
 
     @Autowired
-    UserDetailsService userDetailsService;
-
-    @Autowired
-    JwtUtil jwtUtil;
-
-    @Autowired
     UsersRepository usersRepository;
 
     @Autowired
@@ -62,6 +53,9 @@ public class UsersController {
 
     @Autowired
     private PasswordEncoder bcryptEncoder;
+
+    @Value("${session.expiry:3600}")
+    private int expiry;
 
     @GetMapping(path = {"/"}, name = "users-get")
     @PreAuthorize("hasAnyAuthority('users-get', 'all')")
@@ -152,24 +146,28 @@ public class UsersController {
 
     @PostMapping(name = "users-post")
     @PreAuthorize("hasAnyAuthority('users-post', 'all')")
-    public HttpReponse postUser(HttpServletRequest request, @Valid @RequestBody User user) {
+    public HttpReponse postUser(HttpServletRequest request, @RequestBody User user) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = "getUsers ";
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
 
+        LogUtil.info(logprefix, location, user.toString(), "");
+
         List<User> users = usersRepository.findAll();
 
         for (User existingUser : users) {
             if (existingUser.getUsername().equals(user.getUsername())) {
                 LogUtil.info(logprefix, location, "username already exists", "");
-                response.setStatus(HttpStatus.CONFLICT, "Username already exists");
+                response.setStatus(HttpStatus.CONFLICT, "username already exists");
+                response.setError(HttpStatus.CONFLICT.getReasonPhrase());
                 return response;
             }
             if (existingUser.getEmail().equals(user.getEmail())) {
                 LogUtil.info(logprefix, location, "email already exists", "");
                 response.setStatus(HttpStatus.CONFLICT, "Email already exists");
+                response.setError(HttpStatus.CONFLICT.getReasonPhrase());
                 return response;
             }
         }
@@ -177,16 +175,17 @@ public class UsersController {
         user.setPassword(bcryptEncoder.encode(user.getPassword()));
         user.setCreated(DateTimeUtil.currentTimestamp());
         user.setUpdated(DateTimeUtil.currentTimestamp());
+        user.setLocked(false);
         user = usersRepository.save(user);
-
-        LogUtil.info(logprefix, location, "user created", "");
+        user.setPassword(null);
+        LogUtil.info(logprefix, location, "user created with id: " + user.getId(), "");
         response.setStatus(HttpStatus.CREATED);
         response.setData(user);
         return response;
     }
 
     @PostMapping(path = "/authenticate", name = "users-authenticate")
-    public HttpReponse authenticateUser(@Valid @RequestBody UserAuthenticationBody body, HttpServletRequest request) {
+    public HttpReponse authenticateUser(@RequestBody UserAuthenticationBody body, HttpServletRequest request) {
         String logprefix = request.getRequestURI() + " ";
         String location = "authenticateUser ";
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -194,19 +193,19 @@ public class UsersController {
         LogUtil.info(logprefix, location, "", "");
 
         try {
+            LogUtil.info(logprefix, location, "", "");
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(body.getUsername(), body.getPassword())
             );
-
+            LogUtil.info(logprefix, location, "", "");
         } catch (BadCredentialsException e) {
-            LogUtil.warn(logprefix, location, "BadCredentials", "");
+            LogUtil.error(logprefix, location, "error validating user", "", e);
             response.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
-            response.setStatus(HttpStatus.UNAUTHORIZED, e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED, "Bad Craedentiails");
             return response;
         }
 
-        LogUtil.info(logprefix, location, "User authenticated", "");
-        //final UserDetails userDetails = userDetailsService.loadUserByUsername(body.getUsername());
+        LogUtil.info(logprefix, location, "user authenticated", "");
 
         User user = usersRepository.findByUsername(body.getUsername());
 
@@ -215,37 +214,26 @@ public class UsersController {
         session.setUserId(user.getId());
         session.setCreated(DateTimeUtil.currentTimestamp());
         session.setUpdated(DateTimeUtil.currentTimestamp());
+        session.setExpiry(DateTimeUtil.expiryTimestamp(expiry));
         session.setStatus("ACTIVE");
         session = sessionsRepository.save(session);
+        LogUtil.info(logprefix, location, "session created with id: " + session.getId(), "");
 
-        LogUtil.info(logprefix, location, "Created session with id: " + session.getId(), "");
-        String jwt = jwtUtil.generateToken(session);
+        session.setUserId(null);
+        session.setUpdated(null);
+        session.setStatus(null);
+        session.setRemoteAddress(null);
 
-        class Authentication {
-
-            String token;
-
-            public String getToken() {
-                return token;
-            }
-
-            public void setToken(String token) {
-                this.token = token;
-            }
-        }
-        Authentication auth = new Authentication();
-
-        LogUtil.info(logprefix, location, "Generated token", "");
-        auth.setToken(jwt);
+        LogUtil.info(logprefix, location, "generated token", "");
 
         response.setStatus(HttpStatus.ACCEPTED);
-        response.setData(auth);
+        response.setData(session);
         return response;
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
-    public HttpReponse handleException(HttpServletRequest request, MethodArgumentNotValidException e) {
-        LogUtil.warn(request.getRequestURI() + " ", "handleException ", "Validation failed", "");
+    public HttpReponse handleExceptionBadRequestException(HttpServletRequest request, MethodArgumentNotValidException e) {
+        LogUtil.warn(request.getRequestURI() + " ", "handleExceptionBadRequestException ", "Validation failed", "");
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(x -> x.getDefaultMessage())
                 .collect(Collectors.toList());

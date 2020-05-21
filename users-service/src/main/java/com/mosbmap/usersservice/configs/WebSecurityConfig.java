@@ -1,5 +1,6 @@
 package com.mosbmap.usersservice.configs;
 
+
 import com.mosbmap.usersservice.filters.SessionRequestFilter;
 import com.mosbmap.usersservice.services.MySQLUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
-                .authorizeRequests().antMatchers("/users/authenticate", "/error", "/").permitAll()
+                .authorizeRequests().antMatchers("/users/authenticate", "/error").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
