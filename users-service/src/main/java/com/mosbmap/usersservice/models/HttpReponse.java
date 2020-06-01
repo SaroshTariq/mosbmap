@@ -29,10 +29,10 @@ public class HttpReponse {
     private String path;
     
     /***
-     * Sets status and message as reason phrase of provided status.
+     * Sets success and message as reason phrase of provided status.
      * @param status 
      */
-    public void setStatus(HttpStatus status){
+    public void setSuccessStatus(HttpStatus status){
         this.status = status.value();
         this.message = status.getReasonPhrase();
     }
@@ -40,10 +40,19 @@ public class HttpReponse {
     /***
      * Sets status and custom message.
      * @param status
-     * @param message 
      */
-    public void setStatus(HttpStatus status, String message){
+    public void setErrorStatus(HttpStatus status){
         this.status = status.value();
-        this.message = message;
+        this.error = status.getReasonPhrase();
+    }
+    
+    /***
+     * Sets status and custom message.
+     * @param status
+     * @param message
+     */
+    public void setErrorStatus(HttpStatus status, String message){
+        this.status = status.value();
+        this.error = message;
     }
 }

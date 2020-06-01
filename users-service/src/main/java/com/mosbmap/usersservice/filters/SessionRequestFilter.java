@@ -4,7 +4,6 @@ import com.mosbmap.usersservice.models.MySQLUserDetails;
 import com.mosbmap.usersservice.models.daos.Session;
 import com.mosbmap.usersservice.repositories.SessionsRepository;
 import com.mosbmap.usersservice.services.MySQLUserDetailsService;
-import com.mosbmap.usersservice.utils.JwtUtil;
 import com.mosbmap.usersservice.utils.LogUtil;
 import java.io.IOException;
 import java.util.Optional;
@@ -29,8 +28,6 @@ public class SessionRequestFilter extends OncePerRequestFilter {
     @Autowired
     private MySQLUserDetailsService jwtUserDetailsService;
 
-    @Autowired
-    private JwtUtil jwtUtil;
 
     @Autowired
     SessionsRepository sessionRepository;
@@ -39,19 +36,20 @@ public class SessionRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        LogUtil.info("", "", "----------" + request.getRequestURI() + "----------", "");
-
         String logprefix = request.getRequestURI() + " ";
-        String location = "doFilterInternal ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+
+        LogUtil.info("", "", "----------" + logprefix + "----------", "");
+
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String sessionId = null;
-        String jwtToken = null;
-        // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
+
+        // Token is in the form "Bearer token". Remove Bearer word and get only the Token
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             sessionId = requestTokenHeader.substring(7);
         } else {
-            LogUtil.warn(logprefix, location, "JWT Token does not begin with Bearer String", "");
+            LogUtil.warn(logprefix, location, "Token does not begin with Bearer String", "");
         }
 
         if (sessionId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -61,7 +59,7 @@ public class SessionRequestFilter extends OncePerRequestFilter {
                 Session session = optSession.get();
 
                 MySQLUserDetails userDetails = this.jwtUserDetailsService.loadUserByUsername(session.getUser().getUsername());
-                LogUtil.info(logprefix, location, "JWT Token valid", "");
+                LogUtil.info(logprefix, location, "Token valid", "");
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken

@@ -1,6 +1,5 @@
 package com.mosbmap.usersservice.configs;
 
-
 import com.mosbmap.usersservice.filters.SessionRequestFilter;
 import com.mosbmap.usersservice.services.MySQLUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +32,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Autowired
-    SessionRequestFilter jwtRequestFilter;
+    SessionRequestFilter sessionRequestFilter;
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-
         auth.userDetailsService(mySQLUserDetailsService).passwordEncoder(passwordEncoder());
     }
 
@@ -60,6 +58,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-        httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        httpSecurity.addFilterBefore(sessionRequestFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }

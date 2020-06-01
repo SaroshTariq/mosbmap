@@ -7,14 +7,11 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
-
 
 /**
  *
@@ -33,15 +30,17 @@ public class User implements Serializable {
     @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
 
+    @NotBlank(message = "username is required")
     private String username;
 
+    @NotBlank(message = "password is required")
     private String password;
 
+    @NotBlank(message = "name is required")
     private String name;
 
-
+    @NotBlank(message = "email is required")
     private String email;
-
 
     private boolean locked;
     private String expiry;
@@ -51,7 +50,35 @@ public class User implements Serializable {
     @NotBlank(message = "role is required")
     private String roleId;
 
-    
+    public void updateUser(User user) {
+        if (null != user.getEmail()) {
+            email = user.getEmail();
+        }
+
+        if (null != user.getExpiry()) {
+            expiry = user.getExpiry();
+        }
+
+        if (null != user.getRoleId()) {
+            roleId = user.getRoleId();
+        }
+
+        if (null != user.getUsername()) {
+            username = user.getUsername();
+        }
+
+        if (null != user.getPassword()) {
+            password = user.getPassword();
+        }
+
+        if (null != user.getName()) {
+            name = user.getName();
+        }
+
+        if (locked != user.isLocked()) {
+            locked = user.isLocked();
+        }
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -70,7 +97,4 @@ public class User implements Serializable {
         }
         return true;
     }
-    
-
-
 }

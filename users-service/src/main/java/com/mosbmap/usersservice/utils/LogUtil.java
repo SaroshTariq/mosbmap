@@ -12,14 +12,14 @@ public class LogUtil {
     private static final Logger application = LoggerFactory.getLogger("application");
 
     public static void info(String prefix, String location, String message, String postfix) {
-        application.info(prefix + location + message + postfix);
+        application.info(prefix + " " + location + " " + message + " " + postfix + " ");
     }
 
     public static void warn(String prefix, String location, String message, String postfix) {
-        application.warn(prefix + location + message + postfix);
+        application.warn(prefix + " " + location + " " + message + " " + postfix + " ");
     }
 
     public static void error(String prefix, String location, String message, String postfix, Exception e) {
-        application.error(prefix + location + message + postfix, e);
+        application.error(prefix + " " + location + " " + message + " " + postfix, e);
     }
 }

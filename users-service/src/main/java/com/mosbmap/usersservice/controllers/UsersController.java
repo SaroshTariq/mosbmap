@@ -3,19 +3,17 @@ package com.mosbmap.usersservice.controllers;
 import com.mosbmap.usersservice.models.HttpReponse;
 import com.mosbmap.usersservice.models.daos.Session;
 import com.mosbmap.usersservice.models.daos.User;
+import com.mosbmap.usersservice.models.requestbodies.UserAuthenticationBody;
 import com.mosbmap.usersservice.repositories.SessionsRepository;
 import com.mosbmap.usersservice.repositories.UsersRepository;
 import com.mosbmap.usersservice.utils.DateTimeUtil;
 import com.mosbmap.usersservice.utils.LogUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -61,23 +59,21 @@ public class UsersController {
     @PreAuthorize("hasAnyAuthority('users-get', 'all')")
     public HttpReponse getUsers(HttpServletRequest request) {
         String logprefix = request.getRequestURI() + " ";
-        String location = "getUsers ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
 
-        response.setStatus(HttpStatus.OK);
+        response.setSuccessStatus(HttpStatus.OK);
         response.setData(usersRepository.findAll());
-
         return response;
     }
 
     @GetMapping(path = {"/{id}"}, name = "users-get-by-id")
     @PreAuthorize("hasAnyAuthority('users-get-by-id', 'all')")
     public HttpReponse getUserById(HttpServletRequest request, @PathVariable String id) {
-
         String logprefix = request.getRequestURI() + " ";
-        String location = "getUserById ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
@@ -86,21 +82,21 @@ public class UsersController {
 
         if (!optUser.isPresent()) {
             LogUtil.info(logprefix, location, "user not found", "");
-            response.setStatus(HttpStatus.NOT_FOUND);
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
             return response;
         }
 
         LogUtil.info(logprefix, location, "user found", "");
-        response.setStatus(HttpStatus.OK);
+        response.setSuccessStatus(HttpStatus.OK);
         response.setData(optUser.get());
         return response;
     }
 
     @PutMapping(path = {"/{id}"}, name = "users-put-by-id")
     @PreAuthorize("hasAnyAuthority('users-put-by-id', 'all')")
-    public HttpReponse putUser(HttpServletRequest request, @PathVariable String id, @Valid @RequestBody User user) {
+    public HttpReponse putUser(HttpServletRequest request, @PathVariable String id, @RequestBody User reqBody) {
         String logprefix = request.getRequestURI() + " ";
-        String location = "getUsers ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
@@ -109,46 +105,54 @@ public class UsersController {
 
         if (!optUser.isPresent()) {
             LogUtil.info(logprefix, location, "user not found", "");
-            response.setStatus(HttpStatus.NOT_FOUND);
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
             return response;
         }
 
-        User updateUser = optUser.get();
+        LogUtil.info(logprefix, location, "user found", "");
+        User user = optUser.get();
+        List<String> errors = new ArrayList<>();
 
         List<User> users = usersRepository.findAll();
 
         for (User existingUser : users) {
-            if (!updateUser.equals(existingUser)) {
-                if (existingUser.getUsername().equals(user.getUsername())) {
+            if (!user.equals(existingUser)) {
+                if (existingUser.getUsername().equals(reqBody.getUsername())) {
                     LogUtil.info(logprefix, location, "username already exists", "");
-                    response.setStatus(HttpStatus.CONFLICT, "Username already exists");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("Username already exists");
+                    response.setData(errors);
                     return response;
                 }
-                if (existingUser.getEmail().equals(user.getEmail())) {
+                if (existingUser.getEmail().equals(reqBody.getEmail())) {
                     LogUtil.info(logprefix, location, "email already exists", "");
-                    response.setStatus(HttpStatus.CONFLICT, "Email already exists");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("Email already exists");
+                    response.setData(errors);
                     return response;
                 }
             }
 
         }
 
-        user.setPassword(bcryptEncoder.encode(user.getPassword()));
-        user.setCreated(DateTimeUtil.currentTimestamp());
+        if (null != reqBody.getPassword()) {
+            reqBody.setPassword(bcryptEncoder.encode(reqBody.getPassword()));
+        }
+
+        user.updateUser(reqBody);
         user.setUpdated(DateTimeUtil.currentTimestamp());
-        user = usersRepository.save(user);
 
         LogUtil.info(logprefix, location, "user created", "");
-        response.setStatus(HttpStatus.CREATED);
-        response.setData(user);
+        response.setSuccessStatus(HttpStatus.CREATED);
+        response.setData(usersRepository.save(user));
         return response;
     }
 
     @PostMapping(name = "users-post")
     @PreAuthorize("hasAnyAuthority('users-post', 'all')")
-    public HttpReponse postUser(HttpServletRequest request, @RequestBody User user) throws Exception {
+    public HttpReponse postUser(HttpServletRequest request, @Valid @RequestBody User user) throws Exception {
         String logprefix = request.getRequestURI() + " ";
-        String location = "getUsers ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
@@ -156,18 +160,21 @@ public class UsersController {
         LogUtil.info(logprefix, location, user.toString(), "");
 
         List<User> users = usersRepository.findAll();
+        List<String> errors = new ArrayList<>();
 
         for (User existingUser : users) {
             if (existingUser.getUsername().equals(user.getUsername())) {
                 LogUtil.info(logprefix, location, "username already exists", "");
-                response.setStatus(HttpStatus.CONFLICT, "username already exists");
-                response.setError(HttpStatus.CONFLICT.getReasonPhrase());
+                response.setErrorStatus(HttpStatus.CONFLICT);
+                errors.add("Username already exists");
+                response.setData(errors);
                 return response;
             }
             if (existingUser.getEmail().equals(user.getEmail())) {
                 LogUtil.info(logprefix, location, "email already exists", "");
-                response.setStatus(HttpStatus.CONFLICT, "Email already exists");
-                response.setError(HttpStatus.CONFLICT.getReasonPhrase());
+                response.setErrorStatus(HttpStatus.CONFLICT);
+                errors.add("Email already exists");
+                response.setData(errors);
                 return response;
             }
         }
@@ -179,15 +186,15 @@ public class UsersController {
         user = usersRepository.save(user);
         user.setPassword(null);
         LogUtil.info(logprefix, location, "user created with id: " + user.getId(), "");
-        response.setStatus(HttpStatus.CREATED);
+        response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(user);
         return response;
     }
 
     @PostMapping(path = "/authenticate", name = "users-authenticate")
-    public HttpReponse authenticateUser(@RequestBody UserAuthenticationBody body, HttpServletRequest request) {
+    public HttpReponse authenticateUser(@RequestBody @Valid UserAuthenticationBody body, HttpServletRequest request) throws Exception {
         String logprefix = request.getRequestURI() + " ";
-        String location = "authenticateUser ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
@@ -199,9 +206,8 @@ public class UsersController {
             );
             LogUtil.info(logprefix, location, "", "");
         } catch (BadCredentialsException e) {
-            LogUtil.error(logprefix, location, "error validating user", "", e);
-            response.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
-            response.setStatus(HttpStatus.UNAUTHORIZED, "Bad Craedentiails");
+            LogUtil.warn(logprefix, location, "error validating user", "");
+            response.setErrorStatus(HttpStatus.UNAUTHORIZED, "Bad Craedentiails");
             return response;
         }
 
@@ -226,50 +232,22 @@ public class UsersController {
 
         LogUtil.info(logprefix, location, "generated token", "");
 
-        response.setStatus(HttpStatus.ACCEPTED);
+        response.setSuccessStatus(HttpStatus.ACCEPTED);
         response.setData(session);
         return response;
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class})
     public HttpReponse handleExceptionBadRequestException(HttpServletRequest request, MethodArgumentNotValidException e) {
-        LogUtil.warn(request.getRequestURI() + " ", "handleExceptionBadRequestException ", "Validation failed", "");
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        LogUtil.warn(logprefix, location, "Validation failed", "");
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(x -> x.getDefaultMessage())
                 .collect(Collectors.toList());
         HttpReponse response = new HttpReponse(request.getRequestURI());
-        response.setStatus(HttpStatus.BAD_REQUEST);
+        response.setErrorStatus(HttpStatus.BAD_REQUEST);
         response.setData(errors);
         return response;
     }
-}
-
-//Bodies of request
-@ToString
-@Getter
-@Setter
-class UserAuthenticationBody {
-
-    @NotBlank(message = "username is required")
-    private String username;
-
-    @NotBlank(message = "password is required")
-    private String password;
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
 }

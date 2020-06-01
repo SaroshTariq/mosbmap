@@ -31,4 +31,20 @@ public class Role implements Serializable {
     @NotBlank
     private int simoultaneousLogins;
     private String description;
+
+    public void updateRole(Role role) {
+        if (null != role.getId()) {
+            id = role.getId();
+        }
+
+        if (null != role.getDescription()) {
+            description = role.getDescription();
+        }
+
+        if (0 != role.getSimoultaneousLogins()) {
+            simoultaneousLogins = role.getSimoultaneousLogins();
+        }
+
+    }
+
 }
