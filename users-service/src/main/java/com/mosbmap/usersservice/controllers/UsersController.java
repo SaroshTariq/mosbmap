@@ -23,6 +23,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,7 +57,7 @@ public class UsersController {
     private int expiry;
 
     @GetMapping(path = {"/"}, name = "users-get")
-    @PreAuthorize("hasAnyAuthority('users-get', 'all')")
+    @PreAuthorize("hasAnyUser('users-get', 'all')")
     public HttpReponse getUsers(HttpServletRequest request) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -70,7 +71,7 @@ public class UsersController {
     }
 
     @GetMapping(path = {"/{id}"}, name = "users-get-by-id")
-    @PreAuthorize("hasAnyAuthority('users-get-by-id', 'all')")
+    @PreAuthorize("hasAnyUser('users-get-by-id', 'all')")
     public HttpReponse getUserById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -91,9 +92,35 @@ public class UsersController {
         response.setData(optUser.get());
         return response;
     }
+    
+    
+    @DeleteMapping(path = {"/{id}"}, name = "users-delete-by-id")
+    @PreAuthorize("hasAnyUser('users-delete-by-id', 'all')")
+    public HttpReponse deleteUserById(HttpServletRequest request, @PathVariable String id) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<User> optUser = usersRepository.findById(id);
+
+        if (!optUser.isPresent()) {
+            LogUtil.info(logprefix, location, "user not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "user found", "");
+        usersRepository.delete(optUser.get());
+        
+        LogUtil.info(logprefix, location, "user deleted", "");
+        response.setSuccessStatus(HttpStatus.OK);
+        return response;
+    }
 
     @PutMapping(path = {"/{id}"}, name = "users-put-by-id")
-    @PreAuthorize("hasAnyAuthority('users-put-by-id', 'all')")
+    @PreAuthorize("hasAnyUser('users-put-by-id', 'all')")
     public HttpReponse putUser(HttpServletRequest request, @PathVariable String id, @RequestBody User reqBody) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -149,7 +176,7 @@ public class UsersController {
     }
 
     @PostMapping(name = "users-post")
-    @PreAuthorize("hasAnyAuthority('users-post', 'all')")
+    @PreAuthorize("hasAnyUser('users-post', 'all')")
     public HttpReponse postUser(HttpServletRequest request, @Valid @RequestBody User user) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();

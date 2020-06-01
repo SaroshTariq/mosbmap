@@ -15,12 +15,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class RoleAuthoritiyIdentity implements Serializable {
+public class RoleAuthorityIdentity implements Serializable {
 
     private String roleId;
     private String authorityId;
 
-    public RoleAuthoritiyIdentity(String roleId, String authorityId) {
+    public RoleAuthorityIdentity(String roleId, String authorityId) {
         this.roleId = roleId;
         this.authorityId = authorityId;
     }
@@ -33,7 +33,7 @@ public class RoleAuthoritiyIdentity implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final RoleAuthoritiyIdentity other = (RoleAuthoritiyIdentity) obj;
+        final RoleAuthorityIdentity other = (RoleAuthorityIdentity) obj;
         if (!Objects.equals(this.roleId, other.roleId)) {
             return false;
         }

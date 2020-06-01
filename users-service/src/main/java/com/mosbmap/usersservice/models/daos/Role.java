@@ -25,10 +25,10 @@ public class Role implements Serializable {
 
     @Id
     @Column(name = "id")
-    @NotBlank
+    @NotBlank(message = "id is required")
     private String id;
 
-    @NotBlank
+    @NotBlank(message = "simoultaneousLogins is required")
     private int simoultaneousLogins;
     private String description;
 

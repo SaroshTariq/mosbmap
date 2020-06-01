@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +17,7 @@ import lombok.Setter;
  */
 @Entity
 @Table(name = "role_authorities")
-@IdClass(RoleAuthoritiyIdentity.class)
+@IdClass(RoleAuthorityIdentity.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,7 +25,9 @@ import lombok.Setter;
 public class RoleAuthority implements Serializable {
 
     @Id
+    @NotBlank(message = "roleId is required")
     private String roleId;
     @Id
+    @NotBlank(message = "authorityId is required")
     private String authorityId;
 }
