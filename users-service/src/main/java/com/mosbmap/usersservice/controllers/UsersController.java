@@ -1,9 +1,13 @@
 package com.mosbmap.usersservice.controllers;
 
 import com.mosbmap.usersservice.models.HttpReponse;
+import com.mosbmap.usersservice.models.daos.Buyer;
+import com.mosbmap.usersservice.models.daos.Seller;
 import com.mosbmap.usersservice.models.daos.Session;
 import com.mosbmap.usersservice.models.daos.User;
 import com.mosbmap.usersservice.models.requestbodies.UserAuthenticationBody;
+import com.mosbmap.usersservice.repositories.BuyersRepository;
+import com.mosbmap.usersservice.repositories.SellersRepository;
 import com.mosbmap.usersservice.repositories.SessionsRepository;
 import com.mosbmap.usersservice.repositories.UsersRepository;
 import com.mosbmap.usersservice.utils.DateTimeUtil;
@@ -48,6 +52,12 @@ public class UsersController {
     UsersRepository usersRepository;
 
     @Autowired
+    BuyersRepository buyersRepostory;
+
+    @Autowired
+    private SellersRepository sellersRepostory;
+
+    @Autowired
     SessionsRepository sessionsRepository;
 
     @Autowired
@@ -57,7 +67,7 @@ public class UsersController {
     private int expiry;
 
     @GetMapping(path = {"/"}, name = "users-get")
-    @PreAuthorize("hasAnyUser('users-get', 'all')")
+    @PreAuthorize("hasAnyAuthority('users-get', 'all')")
     public HttpReponse getUsers(HttpServletRequest request) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -71,7 +81,7 @@ public class UsersController {
     }
 
     @GetMapping(path = {"/{id}"}, name = "users-get-by-id")
-    @PreAuthorize("hasAnyUser('users-get-by-id', 'all')")
+    @PreAuthorize("hasAnyAuthority('users-get-by-id', 'all')")
     public HttpReponse getUserById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -92,10 +102,9 @@ public class UsersController {
         response.setData(optUser.get());
         return response;
     }
-    
-    
+
     @DeleteMapping(path = {"/{id}"}, name = "users-delete-by-id")
-    @PreAuthorize("hasAnyUser('users-delete-by-id', 'all')")
+    @PreAuthorize("hasAnyAuthority('users-delete-by-id', 'all')")
     public HttpReponse deleteUserById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -113,15 +122,15 @@ public class UsersController {
 
         LogUtil.info(logprefix, location, "user found", "");
         usersRepository.delete(optUser.get());
-        
+
         LogUtil.info(logprefix, location, "user deleted", "");
         response.setSuccessStatus(HttpStatus.OK);
         return response;
     }
 
     @PutMapping(path = {"/{id}"}, name = "users-put-by-id")
-    @PreAuthorize("hasAnyUser('users-put-by-id', 'all')")
-    public HttpReponse putUser(HttpServletRequest request, @PathVariable String id, @RequestBody User reqBody) {
+    @PreAuthorize("hasAnyAuthority('users-put-by-id', 'all')")
+    public HttpReponse putUserById(HttpServletRequest request, @PathVariable String id, @RequestBody User reqBody) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -147,14 +156,14 @@ public class UsersController {
                 if (existingUser.getUsername().equals(reqBody.getUsername())) {
                     LogUtil.info(logprefix, location, "username already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
-                    errors.add("Username already exists");
+                    errors.add("username already exists");
                     response.setData(errors);
                     return response;
                 }
                 if (existingUser.getEmail().equals(reqBody.getEmail())) {
                     LogUtil.info(logprefix, location, "email already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
-                    errors.add("Email already exists");
+                    errors.add("email already exists");
                     response.setData(errors);
                     return response;
                 }
@@ -176,7 +185,7 @@ public class UsersController {
     }
 
     @PostMapping(name = "users-post")
-    @PreAuthorize("hasAnyUser('users-post', 'all')")
+    @PreAuthorize("hasAnyAuthority('users-post', 'all')")
     public HttpReponse postUser(HttpServletRequest request, @Valid @RequestBody User user) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -193,14 +202,14 @@ public class UsersController {
             if (existingUser.getUsername().equals(user.getUsername())) {
                 LogUtil.info(logprefix, location, "username already exists", "");
                 response.setErrorStatus(HttpStatus.CONFLICT);
-                errors.add("Username already exists");
+                errors.add("username already exists");
                 response.setData(errors);
                 return response;
             }
             if (existingUser.getEmail().equals(user.getEmail())) {
                 LogUtil.info(logprefix, location, "email already exists", "");
                 response.setErrorStatus(HttpStatus.CONFLICT);
-                errors.add("Email already exists");
+                errors.add("email already exists");
                 response.setData(errors);
                 return response;
             }
@@ -218,8 +227,227 @@ public class UsersController {
         return response;
     }
 
+    @GetMapping(path = {"/{id}/buyer"}, name = "users-get-buyer-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-get-authorities-by-userId', 'all')")
+    public HttpReponse getBuyerByUserId(HttpServletRequest request, @PathVariable String id) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<Buyer> optBuyer = buyersRepostory.findById(id);
+
+        if (!optBuyer.isPresent()) {
+            LogUtil.info(logprefix, location, "buyer not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "buyer found", "");
+
+        response.setSuccessStatus(HttpStatus.OK);
+        response.setData(optBuyer.get());
+        return response;
+    }
+
+    @PutMapping(path = {"/{id}/buyer"}, name = "users-put-buyer-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-put-buyer-by-userId', 'all')")
+    public HttpReponse putBuyerByUserId(HttpServletRequest request, @PathVariable String id, @RequestBody Buyer reqBody) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<Buyer> optBuyer = buyersRepostory.findById(id);
+
+        if (!optBuyer.isPresent()) {
+            LogUtil.info(logprefix, location, "buyer not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "buyer found", "");
+        Buyer buyer = optBuyer.get();
+        List<String> errors = new ArrayList<>();
+
+        List<Buyer> buyers = buyersRepostory.findAll();
+
+        for (Buyer existingBuyer : buyers) {
+            if (!buyer.equals(existingBuyer)) {
+                if (existingBuyer.getMobileNumber().equals(reqBody.getMobileNumber())) {
+                    LogUtil.info(logprefix, location, "mobilenumber already exists", "");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("mobileNumber already exists");
+                    response.setData(errors);
+                    return response;
+                }
+            }
+
+        }
+        reqBody.setUserId(null);
+
+        buyer.updateBuyer(reqBody);
+
+        LogUtil.info(logprefix, location, "user created", "");
+        response.setSuccessStatus(HttpStatus.CREATED);
+        response.setData(buyersRepostory.save(buyer));
+        return response;
+    }
+
+    @PostMapping(path = {"/{id}/buyer"}, name = "users-post-buyer-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-post-buyer-by-userId', 'all')")
+    public HttpReponse postBuyerByUserId(HttpServletRequest request, @PathVariable String id, @Valid @RequestBody Buyer reqBody) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<User> optUser = usersRepository.findById(id);
+
+        if (!optUser.isPresent()) {
+            LogUtil.info(logprefix, location, "user not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "user found", "");
+
+        List<String> errors = new ArrayList<>();
+        List<Buyer> buyers = buyersRepostory.findAll();
+
+        for (Buyer existingBuyer : buyers) {
+            if (existingBuyer.getMobileNumber().equals(reqBody.getMobileNumber())) {
+                LogUtil.info(logprefix, location, "mobilenumber already exists", "");
+                response.setErrorStatus(HttpStatus.CONFLICT);
+                errors.add("mobileNumber already exists");
+                response.setData(errors);
+                return response;
+            }
+        }
+
+        reqBody.setUserId(id);
+
+        LogUtil.info(logprefix, location, "buyer created", "");
+        response.setSuccessStatus(HttpStatus.CREATED);
+        response.setData(buyersRepostory.save(reqBody));
+        return response;
+    }
+
+    @GetMapping(path = {"/{id}/seller"}, name = "users-get-seller-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-get-authorities-by-userId', 'all')")
+    public HttpReponse getSellerByUserId(HttpServletRequest request, @PathVariable String id) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<Seller> optSeller = sellersRepostory.findById(id);
+
+        if (!optSeller.isPresent()) {
+            LogUtil.info(logprefix, location, "seller not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "seller found", "");
+
+        response.setSuccessStatus(HttpStatus.OK);
+        response.setData(optSeller.get());
+        return response;
+    }
+
+    @PutMapping(path = {"/{id}/seller"}, name = "users-put-seller-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-put-seller-by-userId', 'all')")
+    public HttpReponse putSellerByUserId(HttpServletRequest request, @PathVariable String id, @RequestBody Seller reqBody) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<Seller> optSeller = sellersRepostory.findById(id);
+
+        if (!optSeller.isPresent()) {
+            LogUtil.info(logprefix, location, "seller not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "seller found", "");
+        Seller seller = optSeller.get();
+        List<String> errors = new ArrayList<>();
+
+        List<Seller> sellers = sellersRepostory.findAll();
+
+        for (Seller existingSeller : sellers) {
+            if (!seller.equals(existingSeller)) {
+                if (existingSeller.getMobileNumber().equals(reqBody.getMobileNumber())) {
+                    LogUtil.info(logprefix, location, "mobilenumber already exists", "");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("mobileNumber already exists");
+                    response.setData(errors);
+                    return response;
+                }
+            }
+
+        }
+        reqBody.setUserId(null);
+
+        seller.updateSeller(reqBody);
+
+        LogUtil.info(logprefix, location, "user created", "");
+        response.setSuccessStatus(HttpStatus.CREATED);
+        response.setData(sellersRepostory.save(seller));
+        return response;
+    }
+
+    @PostMapping(path = {"/{id}/seller"}, name = "users-post-seller-by-userId")
+    @PreAuthorize("hasAnyAuthority('users-post-seller-by-userId', 'all')")
+    public HttpReponse postSellerByUserId(HttpServletRequest request, @PathVariable String id, @Valid @RequestBody Seller reqBody) {
+        String logprefix = request.getRequestURI() + " ";
+        String location = Thread.currentThread().getStackTrace()[1].getMethodName();
+        HttpReponse response = new HttpReponse(request.getRequestURI());
+
+        LogUtil.info(logprefix, location, "", "");
+
+        Optional<User> optUser = usersRepository.findById(id);
+
+        if (!optUser.isPresent()) {
+            LogUtil.info(logprefix, location, "user not found", "");
+            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            return response;
+        }
+
+        LogUtil.info(logprefix, location, "user found", "");
+
+        List<String> errors = new ArrayList<>();
+        List<Seller> sellers = sellersRepostory.findAll();
+
+        for (Seller existingSeller : sellers) {
+            if (existingSeller.getMobileNumber().equals(reqBody.getMobileNumber())) {
+                LogUtil.info(logprefix, location, "mobilenumber already exists", "");
+                response.setErrorStatus(HttpStatus.CONFLICT);
+                errors.add("mobileNumber already exists");
+                response.setData(errors);
+                return response;
+            }
+        }
+
+        reqBody.setUserId(id);
+
+        LogUtil.info(logprefix, location, "seller created", "");
+        response.setSuccessStatus(HttpStatus.CREATED);
+        response.setData(sellersRepostory.save(reqBody));
+        return response;
+    }
+
+    //authentication
     @PostMapping(path = "/authenticate", name = "users-authenticate")
-    public HttpReponse authenticateUser(@RequestBody @Valid UserAuthenticationBody body, HttpServletRequest request) throws Exception {
+    public HttpReponse authenticateUser(@Valid @RequestBody UserAuthenticationBody body, HttpServletRequest request) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());

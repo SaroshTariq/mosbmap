@@ -96,7 +96,7 @@ public class AuthoritiesController {
 
     @PutMapping(path = {"/{id}"}, name = "authorities-put-by-id")
     @PreAuthorize("hasAnyAuthority('authorities-put-by-id', 'all')")
-    public HttpReponse putAuthority(HttpServletRequest request, @PathVariable String id, @RequestBody Authority reqBody) {
+    public HttpReponse putAuthorityById(HttpServletRequest request, @PathVariable String id, @RequestBody Authority reqBody) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());

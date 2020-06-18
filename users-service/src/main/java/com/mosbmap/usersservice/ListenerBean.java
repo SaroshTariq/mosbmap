@@ -5,8 +5,6 @@ import com.mosbmap.usersservice.models.daos.Authority;
 import com.mosbmap.usersservice.repositories.AuthoritiesRepository;
 import com.mosbmap.usersservice.utils.LogUtil;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -46,7 +44,7 @@ public class ListenerBean {
                     }
 
                 } catch (Exception e) {
-                    LogUtil.error("", "handleEvent", "error inserting authority", "", e);
+                    LogUtil.warn("", "handleEvent", "error inserting authority", "");
                 }
 
             });

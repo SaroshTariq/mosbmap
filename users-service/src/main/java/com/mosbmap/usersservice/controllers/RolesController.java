@@ -103,7 +103,7 @@ public class RolesController {
 
     @PutMapping(path = {"/{id}"}, name = "roles-put-by-id")
     @PreAuthorize("hasAnyAuthority('roles-put-by-id', 'all')")
-    public HttpReponse putRole(HttpServletRequest request, @PathVariable String id, @RequestBody Role reqBody) {
+    public HttpReponse putRoleById(HttpServletRequest request, @PathVariable String id, @RequestBody Role reqBody) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -202,7 +202,7 @@ public class RolesController {
 
     @GetMapping(path = {"/{roleId}/authorities/{authorityId}"}, name = "roles-delete-authority-by-id")
     @PreAuthorize("hasAnyAuthority('roles-delete-authority-by-id', 'all')")
-    public HttpReponse deleteRoleAuthorityByRoleId(HttpServletRequest request,
+    public HttpReponse deleteRoleAuthority(HttpServletRequest request,
             @PathVariable String roleId, @PathVariable String authorityId) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();

@@ -80,6 +80,8 @@ public class User implements Serializable {
         }
     }
 
+
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -89,12 +91,11 @@ public class User implements Serializable {
             return false;
         }
         final User other = (User) obj;
-        if (!Objects.equals(this.username, other.username)) {
-            return false;
-        }
-        if (!Objects.equals(this.email, other.email)) {
+        if (!Objects.equals(this.id, other.id)) {
             return false;
         }
         return true;
     }
+
+    
 }
