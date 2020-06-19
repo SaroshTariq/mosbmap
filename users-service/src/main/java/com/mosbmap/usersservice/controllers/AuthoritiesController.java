@@ -96,12 +96,14 @@ public class AuthoritiesController {
 
     @PutMapping(path = {"/{id}"}, name = "authorities-put-by-id")
     @PreAuthorize("hasAnyAuthority('authorities-put-by-id', 'all')")
-    public HttpReponse putAuthorityById(HttpServletRequest request, @PathVariable String id, @RequestBody Authority reqBody) {
+    public HttpReponse putAuthorityById(HttpServletRequest request, @PathVariable String id, 
+            @RequestBody Authority body) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
+        LogUtil.info(logprefix, location, body.toString(), "");
 
         Optional<Authority> optAuthority = authoritiesRepository.findById(id);
 
@@ -119,7 +121,7 @@ public class AuthoritiesController {
 
         for (Authority existingAuthority : authorities) {
             if (!authority.equals(existingAuthority)) {
-                if (existingAuthority.getId().equals(reqBody.getId())) {
+                if (existingAuthority.getId().equals(body.getId())) {
                     LogUtil.info(logprefix, location, "authorityId already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
                     errors.add("authorityId already exists");
@@ -129,9 +131,9 @@ public class AuthoritiesController {
             }
 
         }
-        authority.updateAuthority(reqBody);
+        authority.updateAuthority(body);
 
-        LogUtil.info(logprefix, location, "authority created", "");
+        LogUtil.info(logprefix, location, "authority created with id: "+body.getId(), "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(authoritiesRepository.save(authority));
         return response;
@@ -139,20 +141,20 @@ public class AuthoritiesController {
 
     @PostMapping(name = "authorities-post")
     @PreAuthorize("hasAnyAuthority('authorities-post', 'all')")
-    public HttpReponse postAuthority(HttpServletRequest request, @Valid @RequestBody Authority authority) throws Exception {
+    public HttpReponse postAuthority(HttpServletRequest request, 
+            @Valid @RequestBody Authority body) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
-        LogUtil.info(logprefix, location, "", "");
-
-        LogUtil.info(logprefix, location, authority.toString(), "");
+       LogUtil.info(logprefix, location, "", "");
+        LogUtil.info(logprefix, location, body.toString(), "");
 
         List<Authority> authorities = authoritiesRepository.findAll();
         List<String> errors = new ArrayList<>();
 
         for (Authority existingAuthority : authorities) {
-            if (existingAuthority.getId().equals(authority.getId())) {
+            if (existingAuthority.getId().equals(body.getId())) {
                 LogUtil.info(logprefix, location, "authorityId already exists", "");
                 response.setErrorStatus(HttpStatus.CONFLICT);
                 errors.add("authorityId already exists");
@@ -161,11 +163,11 @@ public class AuthoritiesController {
             }
         }
 
-        authority = authoritiesRepository.save(authority);
+        body = authoritiesRepository.save(body);
 
-        LogUtil.info(logprefix, location, "authority created with id: " + authority.getId(), "");
+        LogUtil.info(logprefix, location, "authority created with id: " + body.getId(), "");
         response.setSuccessStatus(HttpStatus.CREATED);
-        response.setData(authority);
+        response.setData(body);
         return response;
     }
 }

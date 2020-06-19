@@ -1,4 +1,4 @@
-package com.mosbmap.usersservice.configs;
+package com.mosbmap.catalogservice.configs;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +21,7 @@ public class SwaggerConfig {
         return new Docket(DocumentationType.SWAGGER_2)
                 .select()
                 //.paths(PathSelectors.any())
-                .apis(RequestHandlerSelectors.basePackage("com.mosbmap.usersservice"))
+                .apis(RequestHandlerSelectors.basePackage("com.mosbmap.catalogservice"))
                 .build();
     }
 }

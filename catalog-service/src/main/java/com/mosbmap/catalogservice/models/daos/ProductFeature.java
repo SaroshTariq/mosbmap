@@ -1,61 +1,49 @@
-package com.mosbmap.usersservice.models.daos;
+package com.mosbmap.catalogservice.models.daos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
 import java.util.Objects;
-import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 /**
  *
  * @author Sarosh
  */
 @Entity
-@Table(name = "roles")
+@Table(name = "product_features")
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Role implements Serializable {
-
+public class ProductFeature implements Serializable {
     @Id
-    @Column(name = "id")
-    @NotBlank(message = "id is required")
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
-    
+
     @NotBlank(message = "name is required")
     private String name;
 
-    @NotBlank(message = "simoultaneousLogins is required")
-    private int simoultaneousLogins;
-    
-    private String description;
-    
+    private String imageUrl;
 
-    private String parentRoleId;
+    @NotBlank(message = "productId is required")
+    private String productId;
 
-    public void updateRole(Role role) {
-        if (null != role.getId()) {
-            id = role.getId();
-        }
-
-        if (null != role.getDescription()) {
-            description = role.getDescription();
-        }
-
-        if (0 != role.getSimoultaneousLogins()) {
-            simoultaneousLogins = role.getSimoultaneousLogins();
-        }
-
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        return hash;
     }
 
-
+    //if does not match, check again after creating hashcode
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {
@@ -64,12 +52,13 @@ public class Role implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Role other = (Role) obj;
+        final ProductFeature other = (ProductFeature) obj;
         if (!Objects.equals(this.id, other.id)) {
             return false;
         }
         return true;
     }
+
     
     
 

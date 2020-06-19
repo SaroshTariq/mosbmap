@@ -5,6 +5,7 @@ import com.mosbmap.usersservice.models.daos.Authority;
 import com.mosbmap.usersservice.models.daos.Role;
 import com.mosbmap.usersservice.models.daos.RoleAuthorityIdentity;
 import com.mosbmap.usersservice.models.daos.RoleAuthority;
+import com.mosbmap.usersservice.repositories.AuthoritiesRepository;
 import com.mosbmap.usersservice.repositories.RoleAuthoritiesRepository;
 import com.mosbmap.usersservice.repositories.RolesRepository;
 import com.mosbmap.usersservice.utils.LogUtil;
@@ -35,6 +36,9 @@ public class RolesController {
 
     @Autowired
     RolesRepository rolesRepository;
+
+    @Autowired
+    AuthoritiesRepository authoritiesRepository;
 
     @Autowired
     RoleAuthoritiesRepository roleAuthoritiesRepository;
@@ -103,12 +107,13 @@ public class RolesController {
 
     @PutMapping(path = {"/{id}"}, name = "roles-put-by-id")
     @PreAuthorize("hasAnyAuthority('roles-put-by-id', 'all')")
-    public HttpReponse putRoleById(HttpServletRequest request, @PathVariable String id, @RequestBody Role reqBody) {
+    public HttpReponse putRoleById(HttpServletRequest request, @PathVariable String id, @RequestBody Role body) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
+        LogUtil.info(logprefix, location, body.toString(), "");
 
         Optional<Role> optRole = rolesRepository.findById(id);
 
@@ -126,19 +131,26 @@ public class RolesController {
 
         for (Role existingRole : roles) {
             if (!role.equals(existingRole)) {
-                if (existingRole.getId().equals(reqBody.getId())) {
+                if (existingRole.getId().equals(body.getId())) {
                     LogUtil.info(logprefix, location, "roleId already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
                     errors.add("roleId already exists");
                     response.setData(errors);
                     return response;
                 }
+                if (existingRole.getName().equals(body.getName())) {
+                    LogUtil.info(logprefix, location, "name already exists", "");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("name already exists");
+                    response.setData(errors);
+                    return response;
+                }
             }
 
         }
-        role.updateRole(reqBody);
+        role.updateRole(body);
 
-        LogUtil.info(logprefix, location, "role created", "");
+        LogUtil.info(logprefix, location, "role updated for roleId: " + id, "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(rolesRepository.save(role));
         return response;
@@ -146,46 +158,51 @@ public class RolesController {
 
     @PostMapping(name = "roles-post")
     @PreAuthorize("hasAnyAuthority('roles-post', 'all')")
-    public HttpReponse postRole(HttpServletRequest request, @Valid @RequestBody Role role) throws Exception {
+    public HttpReponse postRole(HttpServletRequest request, @Valid @RequestBody Role body) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
-
-        LogUtil.info(logprefix, location, role.toString(), "");
+        LogUtil.info(logprefix, location, body.toString(), "");
 
         List<Role> roles = rolesRepository.findAll();
         List<String> errors = new ArrayList<>();
 
         for (Role existingRole : roles) {
-            if (existingRole.getId().equals(role.getId())) {
+            if (existingRole.getId().equals(body.getId())) {
                 LogUtil.info(logprefix, location, "roleId already exists", "");
                 response.setErrorStatus(HttpStatus.CONFLICT);
                 errors.add("roleId already exists");
                 response.setData(errors);
                 return response;
             }
+            if (existingRole.getName().equals(body.getName())) {
+                LogUtil.info(logprefix, location, "name already exists", "");
+                response.setErrorStatus(HttpStatus.CONFLICT);
+                errors.add("name already exists");
+                response.setData(errors);
+                return response;
+            }
         }
 
-        role = rolesRepository.save(role);
-
-        LogUtil.info(logprefix, location, "role created with id: " + role.getId(), "");
+        LogUtil.info(logprefix, location, "role created with id: " + body.getId(), "");
         response.setSuccessStatus(HttpStatus.CREATED);
-        response.setData(role);
+        response.setData(rolesRepository.save(body));
         return response;
     }
 
-    @GetMapping(path = {"/{id}/authorities"}, name = "roles-get-authorities-by-roleId")
+    @GetMapping(path = {"/{roleId}/authorities"}, name = "roles-get-authorities-by-roleId")
     @PreAuthorize("hasAnyAuthority('roles-get-authorities-by-roleId', 'all')")
-    public HttpReponse getRoleAuthoritiesByRoleId(HttpServletRequest request, @PathVariable String id) {
+    public HttpReponse getRoleAuthoritiesByRoleId(HttpServletRequest request,
+            @PathVariable String roleId) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
 
-        Optional<Role> optRole = rolesRepository.findById(id);
+        Optional<Role> optRole = rolesRepository.findById(roleId);
 
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
@@ -196,12 +213,12 @@ public class RolesController {
         LogUtil.info(logprefix, location, "role found", "");
 
         response.setSuccessStatus(HttpStatus.OK);
-        response.setData(roleAuthoritiesRepository.findByRoleId(id));
+        response.setData(roleAuthoritiesRepository.findByRoleId(roleId));
         return response;
     }
 
-    @GetMapping(path = {"/{roleId}/authorities/{authorityId}"}, name = "roles-delete-authority-by-id")
-    @PreAuthorize("hasAnyAuthority('roles-delete-authority-by-id', 'all')")
+    @DeleteMapping(path = {"/{roleId}/authorities/{authorityId}"}, name = "roles-delete-authorities-by-id")
+    @PreAuthorize("hasAnyAuthority('roles-delete-authorities-by-id', 'all')")
     public HttpReponse deleteRoleAuthority(HttpServletRequest request,
             @PathVariable String roleId, @PathVariable String authorityId) {
         String logprefix = request.getRequestURI() + " ";
@@ -215,7 +232,7 @@ public class RolesController {
 
         if (!optRoleAuthority.isPresent()) {
             LogUtil.info(logprefix, location, "role_authority not found", "");
-            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            response.setErrorStatus(HttpStatus.NOT_FOUND, "role_authority not found");
             return response;
         }
 
@@ -227,37 +244,48 @@ public class RolesController {
         return response;
     }
 
-    @GetMapping(path = {"/{roleId}/authorities"}, name = "roles-post-authorities-by-roleId")
+    @PostMapping(path = {"/{roleId}/authorities"}, name = "roles-post-authorities-by-roleId")
     @PreAuthorize("hasAnyAuthority('roles-post-authorities-by-roleId', 'all')")
-    public HttpReponse postRoleAuthority(HttpServletRequest request, @RequestBody List<Authority> authorities, @PathVariable String id) throws Exception {
+    public HttpReponse postRoleAuthority(HttpServletRequest request,
+            @RequestBody List<Authority> body,
+            @PathVariable String roleId) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
+        LogUtil.info(logprefix, location, body.toString(), "");
 
-        Optional<Role> optRole = rolesRepository.findById(id);
+        Optional<Role> optRole = rolesRepository.findById(roleId);
 
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
-            response.setErrorStatus(HttpStatus.NOT_FOUND);
+            response.setErrorStatus(HttpStatus.NOT_FOUND, "role not found");
             return response;
         }
 
         LogUtil.info(logprefix, location, "role found", "");
 
-        RoleAuthority[] roleAuthorities = new RoleAuthority[authorities.size()];
+        RoleAuthority[] roleAuthorities = new RoleAuthority[body.size()];
         int i = 0;
-        for (Authority authority : authorities) {
+        for (Authority authority : body) {
+
+            Optional optAuthority = authoritiesRepository.findById(authority.getId());
+            if (!optAuthority.isPresent()) {
+                LogUtil.info(logprefix, location, "authority not found", "");
+                response.setErrorStatus(HttpStatus.NOT_FOUND, "authority " + authority.getId() + " not found");
+                return response;
+            }
+
             RoleAuthority roleAuthority = new RoleAuthority();
-            roleAuthority.setRoleId(id);
+            roleAuthority.setRoleId(roleId);
             roleAuthority.setAuthorityId(authority.getId());
             roleAuthoritiesRepository.save(roleAuthority);
             roleAuthorities[i] = roleAuthority;
             i = i++;
         }
 
-        LogUtil.info(logprefix, location, i + "role_authorities created", "");
+        LogUtil.info(logprefix, location, i + "role_authorities created for roleId: " + roleId, "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(roleAuthorities);
         return response;

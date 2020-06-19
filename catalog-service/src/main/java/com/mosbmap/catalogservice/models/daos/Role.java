@@ -1,4 +1,4 @@
-package com.mosbmap.usersservice.models.daos;
+package com.mosbmap.catalogservice.models.daos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.io.Serializable;
@@ -28,17 +28,10 @@ public class Role implements Serializable {
     @Column(name = "id")
     @NotBlank(message = "id is required")
     private String id;
-    
-    @NotBlank(message = "name is required")
-    private String name;
 
     @NotBlank(message = "simoultaneousLogins is required")
     private int simoultaneousLogins;
-    
     private String description;
-    
-
-    private String parentRoleId;
 
     public void updateRole(Role role) {
         if (null != role.getId()) {
