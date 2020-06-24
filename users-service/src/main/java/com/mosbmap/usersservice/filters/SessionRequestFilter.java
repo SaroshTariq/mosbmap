@@ -28,7 +28,6 @@ public class SessionRequestFilter extends OncePerRequestFilter {
     @Autowired
     private MySQLUserDetailsService jwtUserDetailsService;
 
-
     @Autowired
     SessionsRepository sessionRepository;
 
@@ -38,11 +37,11 @@ public class SessionRequestFilter extends OncePerRequestFilter {
 
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
-
         LogUtil.info("", "", "----------" + logprefix + "----------", "");
 
         final String requestTokenHeader = request.getHeader("Authorization");
 
+        LogUtil.info(logprefix, "", "requestTokenHeader: " + requestTokenHeader, "");
         String sessionId = null;
 
         // Token is in the form "Bearer token". Remove Bearer word and get only the Token
@@ -53,7 +52,7 @@ public class SessionRequestFilter extends OncePerRequestFilter {
         }
 
         if (sessionId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
+            LogUtil.info(logprefix, "", "sessionId: " + sessionId, "");
             Optional<Session> optSession = sessionRepository.findById(sessionId);
             if (optSession.isPresent()) {
                 Session session = optSession.get();
@@ -67,6 +66,8 @@ public class SessionRequestFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 
+            }else{
+                 LogUtil.info(logprefix, "", "sessionId: " + sessionId, "");
             }
 
         }

@@ -29,19 +29,55 @@ CREATE TABLE `authorities` (
 
 /*Data for the table `authorities` */
 
+insert  into `authorities`(`id`,`name`,`description`) values 
+('authorities-delete-by-id','deleteAuthorityById','{DELETE /authorities/{id}}'),
+('authorities-get','getAuthorities','{GET /authorities/}'),
+('authorities-get-by-id','getAuthorityById','{GET /authorities/{id}}'),
+('authorities-post','postAuthority','{POST /authorities}'),
+('authorities-put-by-id','putAuthorityById','{PUT /authorities/{id}}'),
+('products-delete-by-id','deleteProductById','{DELETE /products/{id}}'),
+('products-delete-features-by-id','deleteProductFeature','{DELETE /products/features/{id}}'),
+('products-get','getProducts','{GET /products/}'),
+('products-get-by-id','getProductById','{GET /products/{id}}'),
+('products-get-features-by-productId','getProductFeatureByProductId','{GET /products/{productId}/features}'),
+('products-post','postProduct','{POST /products}'),
+('products-post-features-by-productId','postProductFeatureByProductId','{POST /products/{productId}/features}'),
+('products-put-by-id','putProductById','{PUT /products/{id}}'),
+('roles-delete-authorities-by-id','deleteRoleAuthority','{DELETE /roles/{roleId}/authorities/{authorityId}}'),
+('roles-delete-authority-by-id','deleteRoleAuthority','{DELETE /roles/{roleId}/authorities/{authorityId}}'),
+('roles-delete-by-id','deleteRoleById','{DELETE /roles/{id}}'),
+('roles-get','getRoles','{GET /roles/}'),
+('roles-get-authorities-by-roleId','getRoleAuthoritiesByRoleId','{GET /roles/{roleId}/authorities}'),
+('roles-get-by-id','getRoleById','{GET /roles/{id}}'),
+('roles-post','postRole','{POST /roles}'),
+('roles-post-authorities-by-roleId','postRoleAuthority','{POST /roles/{roleId}/authorities}'),
+('roles-put-by-id','putRoleById','{PUT /roles/{id}}'),
+('users-authenticate','authenticateUser','{POST /users/authenticate}'),
+('users-delete-by-id','deleteUserById','{DELETE /users/{id}}'),
+('users-get','getUsers','{GET /users/}'),
+('users-get-buyer-by-userId','getBuyerByUserId','{GET /users/{userId}/buyer}'),
+('users-get-by-id','getUserById','{GET /users/{id}}'),
+('users-get-seller-by-userId','getSellerByUserId','{GET /users/{userId}/seller}'),
+('users-post','postUser','{POST /users}'),
+('users-post-buyer-by-userId','postBuyerByUserId','{POST /users/{userId}/buyer}'),
+('users-post-seller-by-userId','postSellerByUserId','{POST /users/{userId}/seller}'),
+('users-put-buyer-by-userId','putBuyerByUserId','{PUT /users/{userId}/buyer}'),
+('users-put-by-id','putUserById','{PUT /users/{id}}'),
+('users-put-seller-by-userId','putSellerByUserId','{PUT /users/{userId}/seller}');
+
 /*Table structure for table `buyers` */
 
 DROP TABLE IF EXISTS `buyers`;
 
 CREATE TABLE `buyers` (
-  `phoneNumber` varchar(20) DEFAULT NULL,
+  `mobileNumber` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `city` varchar(100) DEFAULT NULL,
   `address` varchar(200) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `zipcode` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `userId` varchar(50) NOT NULL,
   PRIMARY KEY (`userId`),
   KEY `buyer_user_fk_idx` (`userId`),
-  CONSTRAINT `buyer_user_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `buyers_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Buyer table is derivitive of user table, the redundant fields are kept so user can maintain a byer profile differently or can use same details as the main user.';
 
 /*Data for the table `buyers` */
@@ -51,7 +87,7 @@ CREATE TABLE `buyers` (
 DROP TABLE IF EXISTS `cart_product_options`;
 
 CREATE TABLE `cart_product_options` (
-  `id` varchar(45) NOT NULL,
+  `id` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `cartProductId` varchar(50) NOT NULL,
   `productIOptionId` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
@@ -162,11 +198,11 @@ CREATE TABLE `product_features` (
 DROP TABLE IF EXISTS `product_options`;
 
 CREATE TABLE `product_options` (
-  `id` varchar(45) NOT NULL,
+  `id` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `name` varchar(100) DEFAULT NULL,
   `imageUrl` varchar(500) DEFAULT NULL,
   `stock` int(5) DEFAULT NULL COMMENT 'In case an option is added to a product than the stock depends on stock of option. ',
-  `type` varchar(45) NOT NULL COMMENT 'Type of product option shows if option is like a radio or check. Radio type options can only be selected from multiple. A check type option user can select one,all or none. For example water cooling option in a PC will be check type but ram option will be radio type.',
+  `type` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL COMMENT 'Type of product option shows if option is like a radio or check. Radio type options can only be selected from multiple. A check type option user can select one,all or none. For example water cooling option in a PC will be check type but ram option will be radio type.',
   `optionCategory` varchar(100) NOT NULL COMMENT 'An option can be categorized into color, size or anything that contains multiple options.',
   `productId` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
@@ -176,6 +212,23 @@ CREATE TABLE `product_options` (
 
 /*Data for the table `product_options` */
 
+/*Table structure for table `product_reviews` */
+
+DROP TABLE IF EXISTS `product_reviews`;
+
+CREATE TABLE `product_reviews` (
+  `productId` varchar(50) NOT NULL,
+  `buyerId` varchar(50) NOT NULL,
+  `rating` int(2) DEFAULT NULL,
+  `review` varchar(200) DEFAULT NULL,
+  PRIMARY KEY (`productId`,`buyerId`),
+  KEY `product_review_buyerfk_idx` (`buyerId`),
+  CONSTRAINT `product_review_buyerfk` FOREIGN KEY (`buyerId`) REFERENCES `buyers` (`userId`),
+  CONSTRAINT `product_review_productfk` FOREIGN KEY (`productId`) REFERENCES `products` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+/*Data for the table `product_reviews` */
+
 /*Table structure for table `products` */
 
 DROP TABLE IF EXISTS `products`;
@@ -184,8 +237,8 @@ CREATE TABLE `products` (
   `id` varchar(50) NOT NULL,
   `name` varchar(100) DEFAULT NULL,
   `stock` int(5) DEFAULT NULL,
-  `storeId` varchar(50) DEFAULT NULL COMMENT 'A product can exist independently without a store.',
   `categoryId` varchar(50) NOT NULL,
+  `storeId` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL COMMENT 'A product can exist independently without a store.',
   PRIMARY KEY (`id`),
   KEY `category_fk_idx` (`categoryId`),
   KEY `store_fk_idx` (`storeId`),
@@ -216,27 +269,32 @@ DROP TABLE IF EXISTS `roles`;
 
 CREATE TABLE `roles` (
   `id` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL COMMENT 'id is name of role. A role can have multiple authorities.',
-  `allowedSimoultaneousSessions` int(10) DEFAULT '1' COMMENT 'User cannot have more than allowed session at one time.',
   `name` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
-  `level` int(4) DEFAULT NULL COMMENT 'Role level starts from ''0'' being the rolw with all the authorities. This is used to determine the power of a role over other roles. A role cannot edit or delete information of a role which is more/equal powerful than them selves.',
+  `description` varchar(200) DEFAULT NULL,
+  `allowedSimoultaneousSessions` int(10) DEFAULT '1' COMMENT 'User cannot have more than allowed session at one time.',
+  `parentRoleId` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `roles` */
+
+insert  into `roles`(`id`,`name`,`description`,`allowedSimoultaneousSessions`,`parentRoleId`) values 
+('ADMIN',NULL,NULL,1,NULL),
+('MAINTAINER',NULL,NULL,1,NULL);
 
 /*Table structure for table `sellers` */
 
 DROP TABLE IF EXISTS `sellers`;
 
 CREATE TABLE `sellers` (
-  `phoneNumber` varchar(20) DEFAULT NULL,
+  `mobileNumber` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `city` varchar(100) DEFAULT NULL,
   `address` varchar(200) DEFAULT NULL,
   `zipcode` varchar(20) DEFAULT NULL,
   `userId` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   PRIMARY KEY (`userId`),
   KEY `seller_user_fk_idx` (`userId`),
-  CONSTRAINT `seller_user_fk` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `sellers_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Seller table is derivitive of user table, the redundant fields are kept so user can maintain a seller profile differently or can use same details as the main user.';
 
 /*Data for the table `sellers` */
@@ -248,17 +306,21 @@ DROP TABLE IF EXISTS `sessions`;
 CREATE TABLE `sessions` (
   `id` varchar(50) NOT NULL,
   `remoteAddress` varchar(50) DEFAULT NULL COMMENT 'Ip address of user is stored while creating session.',
-  `status` varchar(45) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `expiry` timestamp NULL DEFAULT NULL,
   `created` timestamp NULL DEFAULT NULL,
   `updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `userId` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `status_UNIQUE` (`status`),
   KEY `fk_user_idx` (`userId`),
-  CONSTRAINT `fk_user` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON UPDATE CASCADE
+  CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `sessions` */
+
+insert  into `sessions`(`id`,`remoteAddress`,`status`,`expiry`,`created`,`updated`,`userId`) values 
+('7943dac2-66ad-48d7-9a40-46e39b348ff6','0:0:0:0:0:0:0:1','ACTIVE','2020-06-19 18:24:59','2020-06-19 17:26:39','2020-06-19 17:26:39','bb942258-183f-495e-99d1-3268ad307b11'),
+('dff5f583-a0a1-496f-876d-eba6e4c28adb','0:0:0:0:0:0:0:1','ACTIVE','2020-06-19 18:23:30','2020-06-19 17:25:10','2020-06-19 17:25:10','bb942258-183f-495e-99d1-3268ad307b11');
 
 /*Table structure for table `stores` */
 
@@ -282,7 +344,7 @@ CREATE TABLE `stores` (
 DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE `users` (
-  `id` varchar(100) NOT NULL,
+  `id` varchar(50) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `username` varchar(256) NOT NULL,
   `password` varchar(256) NOT NULL,
   `name` varchar(200) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
@@ -290,7 +352,7 @@ CREATE TABLE `users` (
   `phoneNumberVerified` tinyint(1) DEFAULT '0',
   `email` varchar(300) DEFAULT NULL,
   `emailverified` tinyint(1) DEFAULT '0',
-  `locked` tinyint(1) DEFAULT NULL,
+  `locked` tinyint(1) DEFAULT '0',
   `expiry` timestamp NULL DEFAULT NULL,
   `created` timestamp NULL DEFAULT NULL,
   `updated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -302,6 +364,10 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `users` */
+
+insert  into `users`(`id`,`username`,`password`,`name`,`phoneNumber`,`phoneNumberVerified`,`email`,`emailverified`,`locked`,`expiry`,`created`,`updated`,`roleId`) values 
+('28894506-5435-4952-9049-d07cd7edb912','sarosh','$2a$10$7BCn4uo5Pz5J7s3a9u.HhecL5MwgU23I.pn7CqjA2HYqvUB4nOxpC','Sarosh Tariq',NULL,0,'sarosh@gmail.com',0,0,NULL,'2020-05-22 02:20:25','2020-05-22 02:20:25','ADMIN'),
+('bb942258-183f-495e-99d1-3268ad307b11','user','$2a$10$4h7i12XstShMVii.4OnPUOL26IfZfaKEdZSB6Z6NjfLtqUzytr.8u',NULL,NULL,0,'User\'default.user@kalsym.com',0,0,NULL,'2020-03-13 22:19:33','2020-03-13 22:19:45','ADMIN');
 
 /* Procedure structure for procedure `get_users_without_password` */
 

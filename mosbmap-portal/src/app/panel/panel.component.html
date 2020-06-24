@@ -1,0 +1,57 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+    [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
+    <mat-toolbar color="primary">MosbMap</mat-toolbar>
+    <!-- <mat-nav-list color="primary">
+      <a mat-list-item href="#">Link 1</a>
+      <mat-divider></mat-divider>
+      <a mat-list-item href="#">Link 2</a>
+      <mat-divider></mat-divider>
+      <a mat-list-item href="#">Link 3</a>
+      <mat-divider></mat-divider>
+    </mat-nav-list> -->
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item"><a routerLink="dashboard">Dashboard</a></li>
+      <li class="list-group-item"><a href="" data-toggle="collapse" data-target="#demo">Managment</a>
+        <ul id="demo" class="collapse list-group list-group-flush">
+          <li class="list-group-item"><a routerLink="users">Users</a></li>
+          <li class="list-group-item"><a routerLink="roles">Roles</a></li>
+          <li class="list-group-item"><a routerLink="authorities">Auhtorities</a></li>
+        </ul>
+      </li>
+      <li class="list-group-item"><a href="#">Dashboard</a></li>
+    </ul>
+
+
+
+
+
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()"
+        *ngIf="isHandset$ | async">
+        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+      </button>
+      <span>Hi</span>
+      <span class="example-fill-remaining-space"></span>
+      <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item>
+          <mat-icon>account_circle</mat-icon>
+          <span>Account</span>
+        </button>
+        <button mat-menu-item>
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+    <section>
+      <router-outlet></router-outlet>
+    </section>
+
+  </mat-sidenav-content>
+</mat-sidenav-container>

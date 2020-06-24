@@ -38,7 +38,7 @@ public class ProductsController {
 
     @Autowired
     ProductFeaturesRepository productFeaturesRepository;
-    
+
     @Autowired
     ProductOptionsRepository productOptionsRepository;
 
@@ -129,8 +129,8 @@ public class ProductsController {
 
         List<Product> products = productsRepository.findAll();
 
-        for (Product existingProduct : products) {
-            if (!product.equals(existingProduct)) {
+        if (null != body.getId()) {
+            for (Product existingProduct : products) {
                 if (existingProduct.getId().equals(body.getId())) {
                     LogUtil.info(logprefix, location, "productId already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
@@ -139,7 +139,6 @@ public class ProductsController {
                     return response;
                 }
             }
-
         }
         product.updateProduct(body);
 
@@ -163,13 +162,15 @@ public class ProductsController {
         List<Product> products = productsRepository.findAll();
         List<String> errors = new ArrayList<>();
 
-        for (Product existingProduct : products) {
-            if (existingProduct.getId().equals(body.getId())) {
-                LogUtil.info(logprefix, location, "productId already exists", "");
-                response.setErrorStatus(HttpStatus.CONFLICT);
-                errors.add("productId already exists");
-                response.setData(errors);
-                return response;
+        if (null != body.getId()) {
+            for (Product existingProduct : products) {
+                if (existingProduct.getId().equals(body.getId())) {
+                    LogUtil.info(logprefix, location, "productId already exists", "");
+                    response.setErrorStatus(HttpStatus.CONFLICT);
+                    errors.add("productId already exists");
+                    response.setData(errors);
+                    return response;
+                }
             }
         }
 
@@ -267,8 +268,7 @@ public class ProductsController {
         response.setData(productFeatures);
         return response;
     }
-    
-    
+
     @GetMapping(path = {"/{productId}/options"}, name = "products-get-options-by-productId")
     @PreAuthorize("hasAnyAuthority('products-get-options-by-productId', 'all')")
     public HttpReponse getProductOptionByProductId(HttpServletRequest request,

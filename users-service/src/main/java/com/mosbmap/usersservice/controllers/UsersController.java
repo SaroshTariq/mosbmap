@@ -1,12 +1,15 @@
 package com.mosbmap.usersservice.controllers;
 
+import com.mosbmap.usersservice.models.AuthenticationReponse;
 import com.mosbmap.usersservice.models.HttpReponse;
 import com.mosbmap.usersservice.models.daos.Buyer;
+import com.mosbmap.usersservice.models.daos.RoleAuthority;
 import com.mosbmap.usersservice.models.daos.Seller;
 import com.mosbmap.usersservice.models.daos.Session;
 import com.mosbmap.usersservice.models.daos.User;
 import com.mosbmap.usersservice.models.requestbodies.UserAuthenticationBody;
 import com.mosbmap.usersservice.repositories.BuyersRepository;
+import com.mosbmap.usersservice.repositories.RoleAuthoritiesRepository;
 import com.mosbmap.usersservice.repositories.SellersRepository;
 import com.mosbmap.usersservice.repositories.SessionsRepository;
 import com.mosbmap.usersservice.repositories.UsersRepository;
@@ -50,6 +53,9 @@ public class UsersController {
 
     @Autowired
     UsersRepository usersRepository;
+
+    @Autowired
+    RoleAuthoritiesRepository roleAuthoritiesRepository;
 
     @Autowired
     BuyersRepository buyersRepository;
@@ -167,6 +173,15 @@ public class UsersController {
                     errors.add("email already exists");
                     response.setData(errors);
                     return response;
+                }
+                if (null != body.getId()) {
+                    if (existingUser.getEmail().equals(body.getEmail())) {
+                        LogUtil.info(logprefix, location, "userId already exists", "");
+                        response.setErrorStatus(HttpStatus.CONFLICT);
+                        errors.add("userId already exists");
+                        response.setData(errors);
+                        return response;
+                    }
                 }
             }
 
@@ -505,6 +520,15 @@ public class UsersController {
 
         User user = usersRepository.findByUsername(body.getUsername());
 
+        List<RoleAuthority> roleAuthories = roleAuthoritiesRepository.findByRoleId(user.getRoleId());
+        ArrayList<String> authorities = new ArrayList<>();
+        if (null != roleAuthories) {
+
+            for (RoleAuthority roleAuthority : roleAuthories) {
+                authorities.add(roleAuthority.getAuthorityId());
+            }
+        }
+
         Session session = new Session();
         session.setRemoteAddress(request.getRemoteAddr());
         session.setUserId(user.getId());
@@ -520,10 +544,14 @@ public class UsersController {
         session.setStatus(null);
         session.setRemoteAddress(null);
 
+        AuthenticationReponse authReponse = new AuthenticationReponse();
+        authReponse.setSession(session);
+        authReponse.setAuthorities(authorities);
+
         LogUtil.info(logprefix, location, "generated token", "");
 
         response.setSuccessStatus(HttpStatus.ACCEPTED);
-        response.setData(session);
+        response.setData(authReponse);
         return response;
     }
 
@@ -531,7 +559,7 @@ public class UsersController {
     public HttpReponse handleExceptionBadRequestException(HttpServletRequest request, MethodArgumentNotValidException e) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
-        LogUtil.warn(logprefix, location, "Validation failed", "");
+        LogUtil.warn(logprefix, location, "validation failed", "");
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(x -> x.getDefaultMessage())
                 .collect(Collectors.toList());

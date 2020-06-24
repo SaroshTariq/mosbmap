@@ -1,0 +1,57 @@
+<div class="container-fluid">
+    <h3 style="margin-top: 2%;">Users</h3>
+    <div class="row">
+        <div class="col-md-4">
+            <input placeholder="Search..." class="form-control" [(ngModel)]="searchString">
+        </div>
+        <div class="col-md-2">
+            <select class="form-control" [(ngModel)]="searchBy">
+                <option value="username">Username</option>
+                <option value="email">Email</option>
+                <option value="role">Role</option>
+            </select>
+
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-primary" (click)="openNewRoomModal()">Create</button>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-danger" (click)="onDeleteClicked()">Delete</button>
+        </div>
+
+    </div>
+    <hr>
+    <div class="row">
+
+        <div class="col-md-12">
+            <table class="table table-hover bg-white border">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">#</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Locked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let user of users; let i=index;" class="pointer">
+                        <th>
+                            <label>
+                                <input type="checkbox" value="{{user.id}}"
+                                    (change)="onRoomCheckBoxChange(id,$event)">
+                            </label>
+                        </th>
+                        <th scope="row" (click)="openEditRoomModal(user.id)">{{ i+1 }}</th>
+                        <td (click)="openEditRoomModal(user.user_id)">{{ user.username }}</td>
+                        <td (click)="openEditRoomModal(user.user_id)">{{ user.email }}</td>
+                        <td (click)="openEditRoomModal(user.user_id)">{{ user.roleId }}</td>
+                        <td (click)="openEditRoomModal(user.user_id)">{{ user.locked }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
