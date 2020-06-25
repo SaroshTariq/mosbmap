@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,7 +35,7 @@ public class AuthoritiesController {
 
     @GetMapping(path = {"/"}, name = "authorities-get")
     @PreAuthorize("hasAnyAuthority('authorities-get', 'all')")
-    public HttpReponse getAuthorities(HttpServletRequest request) {
+    public ResponseEntity<HttpReponse> getAuthorities(HttpServletRequest request) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -43,12 +44,12 @@ public class AuthoritiesController {
 
         response.setSuccessStatus(HttpStatus.OK);
         response.setData(authoritiesRepository.findAll());
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping(path = {"/{id}"}, name = "authorities-get-by-id")
     @PreAuthorize("hasAnyAuthority('authorities-get-by-id', 'all')")
-    public HttpReponse getAuthorityById(HttpServletRequest request, @PathVariable String id) {
+    public ResponseEntity<HttpReponse> getAuthorityById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -60,18 +61,18 @@ public class AuthoritiesController {
         if (!optAuthority.isPresent()) {
             LogUtil.info(logprefix, location, "authority not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "authority found", "");
         response.setSuccessStatus(HttpStatus.OK);
         response.setData(optAuthority.get());
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
     
     @DeleteMapping(path = {"/{id}"}, name = "authorities-delete-by-id")
     @PreAuthorize("hasAnyAuthority('authorities-delete-by-id', 'all')")
-    public HttpReponse deleteAuthorityById(HttpServletRequest request, @PathVariable String id) {
+    public ResponseEntity<HttpReponse> deleteAuthorityById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -83,7 +84,7 @@ public class AuthoritiesController {
         if (!optAuthority.isPresent()) {
             LogUtil.info(logprefix, location, "authority not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "authority found", "");
@@ -91,12 +92,12 @@ public class AuthoritiesController {
         
         LogUtil.info(logprefix, location, "authority deleted", "");
         response.setSuccessStatus(HttpStatus.OK);
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PutMapping(path = {"/{id}"}, name = "authorities-put-by-id")
     @PreAuthorize("hasAnyAuthority('authorities-put-by-id', 'all')")
-    public HttpReponse putAuthorityById(HttpServletRequest request, @PathVariable String id, 
+    public ResponseEntity<HttpReponse> putAuthorityById(HttpServletRequest request, @PathVariable String id, 
             @RequestBody Authority body) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -110,7 +111,7 @@ public class AuthoritiesController {
         if (!optAuthority.isPresent()) {
             LogUtil.info(logprefix, location, "authority not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "authority found", "");
@@ -126,22 +127,22 @@ public class AuthoritiesController {
                     response.setErrorStatus(HttpStatus.CONFLICT);
                     errors.add("authorityId already exists");
                     response.setData(errors);
-                    return response;
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
                 }
             }
 
         }
         authority.updateAuthority(body);
 
-        LogUtil.info(logprefix, location, "authority created with id: "+body.getId(), "");
-        response.setSuccessStatus(HttpStatus.CREATED);
+        LogUtil.info(logprefix, location, "authority updated for id: "+body.getId(), "");
+        response.setSuccessStatus(HttpStatus.ACCEPTED);
         response.setData(authoritiesRepository.save(authority));
-        return response;
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PostMapping(name = "authorities-post")
     @PreAuthorize("hasAnyAuthority('authorities-post', 'all')")
-    public HttpReponse postAuthority(HttpServletRequest request, 
+    public ResponseEntity<HttpReponse> postAuthority(HttpServletRequest request, 
             @Valid @RequestBody Authority body) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -159,7 +160,7 @@ public class AuthoritiesController {
                 response.setErrorStatus(HttpStatus.CONFLICT);
                 errors.add("authorityId already exists");
                 response.setData(errors);
-                return response;
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
         }
 
@@ -168,6 +169,6 @@ public class AuthoritiesController {
         LogUtil.info(logprefix, location, "authority created with id: " + body.getId(), "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(body);
-        return response;
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

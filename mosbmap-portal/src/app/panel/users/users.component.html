@@ -1,47 +1,48 @@
-<div class="container-fluid">
-    <h3 style="margin-top: 2%;">Users</h3>
+<div class="container-fluid" style="margin-top: 2%; margin-bottom: 2%; position: absolute;">
+    <h3>Users</h3>
     <div class="row">
         <div class="col-md-4">
-            <input placeholder="Search..." class="form-control" [(ngModel)]="searchString">
+            <input placeholder="Search..." class="form-control form-control-sm" [(ngModel)]="searchString">
         </div>
         <div class="col-md-2">
-            <select class="form-control" [(ngModel)]="searchBy">
+            <select class="form-control form-control-sm" [(ngModel)]="searchBy">
                 <option value="username">Username</option>
                 <option value="email">Email</option>
-                <option value="role">Role</option>
+                <option value="roleId">Role</option>
             </select>
 
         </div>
+
         <div class="col-md-1">
-            <button class="btn btn-primary" (click)="openNewRoomModal()">Create</button>
+            <button class="btn btn-primary btn-sm " (click)="loadUsers()">Search</button>
+        </div>
+        <div class="col-md-1"></div>
+        <div class="col-md-1">
+            <button class="btn btn-outline-primary btn-sm" (click)="openCreateModal()">Create</button>
         </div>
         <div class="col-md-1">
-            <button class="btn btn-danger" (click)="onDeleteClicked()">Delete</button>
+            <button class="btn btn-outline-danger btn-sm" (click)="onDeleteClicked()">Delete</button>
         </div>
 
     </div>
     <hr>
     <div class="row">
-
         <div class="col-md-12">
             <table class="table table-hover bg-white border">
                 <thead>
                     <tr>
-                        <th scope="col"></th>
-                        <th scope="col">#</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Role</th>
-                        <th scope="col">Locked</th>
+                        <th></th>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Locked</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let user of users; let i=index;" class="pointer">
                         <th>
-                            <label>
-                                <input type="checkbox" value="{{user.id}}"
-                                    (change)="onRoomCheckBoxChange(id,$event)">
-                            </label>
+                            <input type="checkbox" value="{{user.id}}" (change)="onRoomCheckBoxChange(id,$event)">
                         </th>
                         <th scope="row" (click)="openEditRoomModal(user.id)">{{ i+1 }}</th>
                         <td (click)="openEditRoomModal(user.user_id)">{{ user.username }}</td>
@@ -53,5 +54,29 @@
             </table>
         </div>
     </div>
+    <div class="row">
+        <div class="col-md-8">
+            Items per page: 
+            <select class="form-control-sm" [(ngModel)]="paging.pageSize" (change)="loadUsers()">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+            </select>
 
+        </div>
+
+        <div class="col-md-1 text-center border-right border-secondary ">
+            <button class="btn btn-primary btn-sm">Previous</button>
+        </div>
+        <div class="col-md-2">
+            <select class="form-control form-control-sm" [(ngModel)]="paging.page" (change)="loadUsers()">
+                <option  *ngFor="let page of pages; let i=index;" [value]="page">Page {{ i+1 }}</option>
+            </select>
+        </div>
+        <div class="col-md-1 text-center border-left border-secondary">
+            <button class="btn btn-primary btn-sm">Next</button>
+        </div>
+
+    </div>
 </div>

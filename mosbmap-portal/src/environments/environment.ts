@@ -5,7 +5,9 @@
 export const environment = {
   production: false,
   usersservice_baseUrl: "http://localhost:3000/",
-  usersservice_baseEndpoint: "users/"
+  usersservice_baseEndpoint: "users/",
+  rolesservice_baseUrl: "http://localhost:3000/",
+  rolesservice_baseEndpoint: "roles/"
 };
 
 /*

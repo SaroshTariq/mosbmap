@@ -23,7 +23,7 @@ export class LoginComponent implements OnInit {
   };
 
   animate = false;
-  errorMessage="";
+  errorMessage = "";
 
   constructor(private formBuilder: FormBuilder, private router: Router, private usersService: UsersService,
     private authService: AuthService, private notifyService: NotificationService) { }
@@ -40,21 +40,20 @@ export class LoginComponent implements OnInit {
     try {
       this.usersService.authenticateUser(this.userForm.value).subscribe(res => {
         this.animate = false;
-
-        if (401==res['status']) {
-          this.notifyService.error('Invalid email or password.', "Login Failed!");
-        } 
-        else if(400==res['status']){
-
-        }else if(202==res['status']){
-          this.notifyService.success('Successfully logged in.', 'Login Success!');
-          this.authService.login(res['data']);
-          this.router.navigate(['/panel']);
-        }
+        this.notifyService.success('Successfully logged in.', 'Login Success!');
+        this.authService.login(res['data']);
+        this.router.navigate(['/panel']);
       },
       err => {
+        if (401 == err.status) {
+          this.notifyService.error('Invalid email or password.', "Login Failed!");
+        } else if (400 == err.status) {
+
+        } else {
+          this.notifyService.error("Internal error.", "Error!");
+        }
         this.animate = false;
-        this.notifyService.error("Internal error.", "Error!");
+
       });
     } catch (error) {
       this.animate = false;
@@ -62,6 +61,11 @@ export class LoginComponent implements OnInit {
     }
 
 
+
+  }
+
+
+  animationCreated(event) {
 
   }
 }

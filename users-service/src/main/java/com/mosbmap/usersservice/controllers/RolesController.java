@@ -15,7 +15,12 @@ import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -45,21 +51,38 @@ public class RolesController {
 
     @GetMapping(path = {"/"}, name = "roles-get")
     @PreAuthorize("hasAnyAuthority('roles-get', 'all')")
-    public HttpReponse getRoles(HttpServletRequest request) {
+    public ResponseEntity<HttpReponse> getRoles(HttpServletRequest request,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String parentRoleId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
 
         LogUtil.info(logprefix, location, "", "");
 
+        Role role = new Role();
+        //search.setId(id);
+        role.setName(name);
+        role.setParentRoleId(parentRoleId);
+
+        LogUtil.info(logprefix, location, "search: " + role.toString(), "");
+        ExampleMatcher matcher = ExampleMatcher.matchingAll().withIgnoreCase()
+                .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING);
+        Example<Role> example = Example.of(role, matcher);
+
+        LogUtil.info(logprefix, location, "page: " + page + " pageSize: " + pageSize, "");
+        Pageable pageable = PageRequest.of(page, pageSize);
+
         response.setSuccessStatus(HttpStatus.OK);
-        response.setData(rolesRepository.findAll());
-        return response;
+        response.setData(rolesRepository.findAll(example, pageable));
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping(path = {"/{id}"}, name = "roles-get-by-id")
     @PreAuthorize("hasAnyAuthority('roles-get-by-id', 'all')")
-    public HttpReponse getRoleById(HttpServletRequest request, @PathVariable String id) {
+    public ResponseEntity<HttpReponse> getRoleById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -71,18 +94,18 @@ public class RolesController {
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role found", "");
         response.setSuccessStatus(HttpStatus.OK);
         response.setData(optRole.get());
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping(path = {"/{id}"}, name = "roles-delete-by-id")
     @PreAuthorize("hasAnyAuthority('roles-delete-by-id', 'all')")
-    public HttpReponse deleteRoleById(HttpServletRequest request, @PathVariable String id) {
+    public ResponseEntity<HttpReponse> deleteRoleById(HttpServletRequest request, @PathVariable String id) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -94,7 +117,7 @@ public class RolesController {
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role found", "");
@@ -102,12 +125,12 @@ public class RolesController {
 
         LogUtil.info(logprefix, location, "role deleted", "");
         response.setSuccessStatus(HttpStatus.OK);
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PutMapping(path = {"/{id}"}, name = "roles-put-by-id")
     @PreAuthorize("hasAnyAuthority('roles-put-by-id', 'all')")
-    public HttpReponse putRoleById(HttpServletRequest request, @PathVariable String id, @RequestBody Role body) {
+    public ResponseEntity<HttpReponse> putRoleById(HttpServletRequest request, @PathVariable String id, @RequestBody Role body) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -120,7 +143,7 @@ public class RolesController {
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role found", "");
@@ -136,29 +159,29 @@ public class RolesController {
                     response.setErrorStatus(HttpStatus.CONFLICT);
                     errors.add("roleId already exists");
                     response.setData(errors);
-                    return response;
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
                 }
                 if (existingRole.getName().equals(body.getName())) {
                     LogUtil.info(logprefix, location, "name already exists", "");
                     response.setErrorStatus(HttpStatus.CONFLICT);
                     errors.add("name already exists");
                     response.setData(errors);
-                    return response;
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
                 }
             }
 
         }
         role.updateRole(body);
 
-        LogUtil.info(logprefix, location, "role updated for roleId: " + id, "");
-        response.setSuccessStatus(HttpStatus.CREATED);
+        LogUtil.info(logprefix, location, "role updated for id: " + id, "");
+        response.setSuccessStatus(HttpStatus.ACCEPTED);
         response.setData(rolesRepository.save(role));
-        return response;
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PostMapping(name = "roles-post")
     @PreAuthorize("hasAnyAuthority('roles-post', 'all')")
-    public HttpReponse postRole(HttpServletRequest request, @Valid @RequestBody Role body) throws Exception {
+    public ResponseEntity<HttpReponse> postRole(HttpServletRequest request, @Valid @RequestBody Role body) throws Exception {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
         HttpReponse response = new HttpReponse(request.getRequestURI());
@@ -175,26 +198,26 @@ public class RolesController {
                 response.setErrorStatus(HttpStatus.CONFLICT);
                 errors.add("roleId already exists");
                 response.setData(errors);
-                return response;
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
             if (existingRole.getName().equals(body.getName())) {
                 LogUtil.info(logprefix, location, "name already exists", "");
                 response.setErrorStatus(HttpStatus.CONFLICT);
                 errors.add("name already exists");
                 response.setData(errors);
-                return response;
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
         }
 
         LogUtil.info(logprefix, location, "role created with id: " + body.getId(), "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(rolesRepository.save(body));
-        return response;
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping(path = {"/{roleId}/authorities"}, name = "roles-get-authorities-by-roleId")
     @PreAuthorize("hasAnyAuthority('roles-get-authorities-by-roleId', 'all')")
-    public HttpReponse getRoleAuthoritiesByRoleId(HttpServletRequest request,
+    public ResponseEntity<HttpReponse> getRoleAuthoritiesByRoleId(HttpServletRequest request,
             @PathVariable String roleId) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -206,20 +229,20 @@ public class RolesController {
 
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
-            response.setErrorStatus(HttpStatus.NOT_FOUND);
-            return response;
+            response.setErrorStatus(HttpStatus.NOT_FOUND, "role not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role found", "");
 
         response.setSuccessStatus(HttpStatus.OK);
         response.setData(roleAuthoritiesRepository.findByRoleId(roleId));
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @DeleteMapping(path = {"/{roleId}/authorities/{authorityId}"}, name = "roles-delete-authorities-by-id")
     @PreAuthorize("hasAnyAuthority('roles-delete-authorities-by-id', 'all')")
-    public HttpReponse deleteRoleAuthority(HttpServletRequest request,
+    public ResponseEntity<HttpReponse> deleteRoleAuthority(HttpServletRequest request,
             @PathVariable String roleId, @PathVariable String authorityId) {
         String logprefix = request.getRequestURI() + " ";
         String location = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -233,7 +256,7 @@ public class RolesController {
         if (!optRoleAuthority.isPresent()) {
             LogUtil.info(logprefix, location, "role_authority not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND, "role_authority not found");
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role_authority found", "");
@@ -241,12 +264,12 @@ public class RolesController {
 
         LogUtil.info(logprefix, location, "role_authority deleted", "");
         response.setSuccessStatus(HttpStatus.OK);
-        return response;
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping(path = {"/{roleId}/authorities"}, name = "roles-post-authorities-by-roleId")
     @PreAuthorize("hasAnyAuthority('roles-post-authorities-by-roleId', 'all')")
-    public HttpReponse postRoleAuthority(HttpServletRequest request,
+    public ResponseEntity<HttpReponse> postRoleAuthority(HttpServletRequest request,
             @RequestBody List<Authority> body,
             @PathVariable String roleId) throws Exception {
         String logprefix = request.getRequestURI() + " ";
@@ -261,7 +284,7 @@ public class RolesController {
         if (!optRole.isPresent()) {
             LogUtil.info(logprefix, location, "role not found", "");
             response.setErrorStatus(HttpStatus.NOT_FOUND, "role not found");
-            return response;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
         LogUtil.info(logprefix, location, "role found", "");
@@ -272,9 +295,9 @@ public class RolesController {
 
             Optional optAuthority = authoritiesRepository.findById(authority.getId());
             if (!optAuthority.isPresent()) {
-                LogUtil.info(logprefix, location, "authority not found", "");
+                LogUtil.info(logprefix, location, "authority " + authority.getId() + " not found", "");
                 response.setErrorStatus(HttpStatus.NOT_FOUND, "authority " + authority.getId() + " not found");
-                return response;
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             RoleAuthority roleAuthority = new RoleAuthority();
@@ -288,6 +311,6 @@ public class RolesController {
         LogUtil.info(logprefix, location, i + "role_authorities created for roleId: " + roleId, "");
         response.setSuccessStatus(HttpStatus.CREATED);
         response.setData(roleAuthorities);
-        return response;
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

@@ -1,0 +1,40 @@
+<div class="modal-header">
+    <h4 class="modal-title pull-left">New User</h4>
+</div>
+<div class="modal-body">
+    <form [formGroup]="newForm">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="h5 text-red">Username</label>
+                <input type="text" class="form-control" formControlName="username" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <label class="h5 text-red">Full Name</label>
+                <input type="text" class="form-control" formControlName="name" />
+            </div>
+            <div class="col-md-6">
+                <label class="h5 text-red">Email</label>
+                <input type="text" class="form-control" formControlName="email" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <label class="h5 text-red">Password</label>
+                <input type="text" class="form-control" formControlName="password" />
+            </div>
+            <div class="col-md-4">
+                <label class="h5 text-red">Role</label>
+                <select class="form-control" >
+                    <option *ngFor="let role of roles;" value="role.id">{{role.name}}</option>
+                </select>
+                <input type="text" class="form-control" formControlName="roleId" />
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" (click)="save()" [disabled]="!newForm.valid">Save</button>
+    <button class="btn btn-secondary" (click)="cancel()">Cancel</button>
+</div>

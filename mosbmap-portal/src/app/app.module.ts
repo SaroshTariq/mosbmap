@@ -8,6 +8,8 @@ import { LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
 import { MatToolbarModule, MatIconModule, MatSidenavModule, MatListModule, MatButtonModule } from  '@angular/material';
 import {MatMenuModule} from '@angular/material/menu';
+import {MatSelectModule} from '@angular/material/select';
+import { ModalModule } from 'ngx-bootstrap/modal';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -19,6 +21,7 @@ import { AuthInterceptor } from './services/auth.interceptor';
 import { LayoutModule } from '@angular/cdk/layout';
 import { DashboardComponent } from './panel/dashboard/dashboard.component';
 import { UsersComponent } from './panel/users/users.component';
+import { NewUserModalComponent } from './panel/users/new-user-modal/new-user-modal.component';
 
 export function playerFactory() {
   return player;
@@ -30,7 +33,8 @@ export function playerFactory() {
     LoginComponent,
     PanelComponent,
     DashboardComponent,
-    UsersComponent
+    UsersComponent,
+    NewUserModalComponent
   ],
   imports: [
     BrowserModule,
@@ -47,7 +51,9 @@ export function playerFactory() {
     MatButtonModule,
     MatIconModule,
     LayoutModule,
-    MatMenuModule
+    MatMenuModule,
+    MatSelectModule,
+    ModalModule.forRoot()
   ],
   providers: [ClientService, AuthService,
     {
@@ -55,6 +61,7 @@ export function playerFactory() {
       useClass: AuthInterceptor,
       multi: true
     }],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents:[NewUserModalComponent]
 })
 export class AppModule { }

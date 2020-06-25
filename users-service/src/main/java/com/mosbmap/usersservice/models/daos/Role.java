@@ -33,7 +33,7 @@ public class Role implements Serializable {
     private String name;
 
     @NotBlank(message = "simoultaneousLogins is required")
-    private int simoultaneousLogins;
+    private int simoultaneousSesions;
     
     private String description;
     
@@ -49,8 +49,8 @@ public class Role implements Serializable {
             description = role.getDescription();
         }
 
-        if (0 != role.getSimoultaneousLogins()) {
-            simoultaneousLogins = role.getSimoultaneousLogins();
+        if (0 != role.getSimoultaneousSesions()) {
+            simoultaneousSesions = role.getSimoultaneousSesions();
         }
 
     }
@@ -69,6 +69,11 @@ public class Role implements Serializable {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        return "Role{" + "id=" + id + ", name=" + name + ", simoultaneousSesions=" + simoultaneousSesions + ", description=" + description + ", parentRoleId=" + parentRoleId + '}';
     }
     
     
